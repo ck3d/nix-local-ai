@@ -1,9 +1,17 @@
 {
   description = "Nix package of LocalAI";
 
-  outputs = { self, nixpkgs }: {
-
-    packages.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.callPackage ./. { };
-
-  };
+  outputs = { self, nixpkgs }:
+    let
+      forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
+    in
+    {
+      packages = forAllSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          local-ai = pkgs.callPackage ./local-ai { };
+        });
+    };
 }
