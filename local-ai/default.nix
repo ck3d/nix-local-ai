@@ -8,24 +8,41 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "42ba448383692c11ca8f04f2b87e87f3f9bdac30";
-    hash = "sha256-Xh2hftxgWYtgRAGWiM1NVUNBM386zo70MxD8txpCBOk=";
+    rev = "cb8d7cd4cb95725a04504a9e3a26dd72a12b69ac";
+    hash = "sha256-l1E85bSMm5S0bIBoPRGdzOmHtStAwufDQgSx8bV1HV4=";
     fetchSubmodules = true;
   };
+
+  llama_cpp = fetchFromGitHub {
+    owner = "mudler";
+    repo = "llama.cpp";
+    rev = "48ce8722a05a018681634af801fd0fd45b3a87cc";
+    hash = "sha256-V2MrTl3AZc0oMV6A0JkLzsEbcPOpLTQKzX84Y1j3mHA=";
+    fetchSubmodules = true;
+  };
+
+  go-ggllm = fetchFromGitHub {
+    owner = "mudler";
+    repo = "go-ggllm.cpp";
+    rev = "862477d16eefb0805261c19c9b0d053e3b2b684b";
+    hash = "sha256-WMinA9eFsuYqNywBqlAz2n4BvD6RCfi6xzwyZQCAHW4=";
+    fetchSubmodules = true;
+  };
+
 
   go-ggml-transformers = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-ggml-transformers.cpp";
-    rev = "8e31841dcddca16468c11b2e7809f279fa76a832";
-    hash = "sha256-cDSHv2VTnMeJze/PYGJ/B0LkKzrTpUvf7pNUNT4hBTY=";
+    rev = "ffb09d7dd71e2cbc6c5d7d05357d230eea6f369a";
+    hash = "sha256-WdCj6cfs98HvG3jnA6CWsOtACjMkhSmrKw9weHkLQQ4=";
     fetchSubmodules = true;
   };
 
   gpt4all = fetchFromGitHub {
     owner = "nomic-ai";
     repo = "gpt4all";
-    rev = "70cbff70cc2a9ad26d492d44ab582d32e6219956";
-    hash = "sha256-mvOpAGkt0vdgMZbEqAoyhvDFBHVjfSPWq8a0Ef8hvPM=";
+    rev = "cfd70b69fcf5e587b8e0e3e9b9aaa90e19cbbc51";
+    hash = "sha256-1Fpi1wymSg1B8hAEIKK8Z57YcZgTEznClBuDZzwcryc=";
     fetchSubmodules = true;
   };
 
@@ -80,16 +97,16 @@ let
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "1.20.1";
+  version = "1.21.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-0kk4DHxCqOT0A6zG6cGkY93tN3DPmYwq0Gs7zKbBZDU=";
+    hash = "sha256-uOeKT9BsTWfpPaRk/7jh+5fq8IlEeDQ0fi9b3TnF8iM=";
   };
 
-  vendorSha256 = "sha256-VImPpYXjf51o1Z2NVx3ZKx3sQJyexVfkJikhtJccX8Q=";
+  vendorSha256 = "sha256-JTqaDKJikH9xWxhFwI3ZrKz1srlT1Dx1my4WcTB/dWE=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
@@ -99,6 +116,8 @@ buildGoModule rec {
   postPatch = ''
     sed -i Makefile \
       -e 's;git clone.*go-llama$;cp -r --no-preserve=mode,ownership ${go-llama} go-llama;' \
+      -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp} llama\.cpp;' \
+      -e 's;git clone.*go-ggllm$;cp -r --no-preserve=mode,ownership ${go-ggllm} go-ggllm;' \
       -e 's;git clone.*go-ggml-transformers$;cp -r --no-preserve=mode,ownership ${go-ggml-transformers} go-ggml-transformers;' \
       -e 's;git clone.*gpt4all$;cp -r --no-preserve=mode,ownership ${gpt4all} gpt4all;' \
       -e 's;git clone.*go-piper$;cp -r --no-preserve=mode,ownership ${go-piper} go-piper;' \
