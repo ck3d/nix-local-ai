@@ -1,0 +1,3 @@
+#!/bin/sh -eux
+
+exec env LOG_PATH=temp APIKEY_PATH=temp nix run ..#flowise -- start

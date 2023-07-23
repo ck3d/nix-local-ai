@@ -1,0 +1,11 @@
+#!/bin/sh -eux
+
+nixpkgs=github:nixos/nixpkgs/release-23.05
+
+nix build ..#flowise.src
+cp -f result/package.json .
+rm result
+nix run $nixpkgs#yarn -- install --ignore-scripts --production=true
+rm -rf node_modules
+nix run $nixpkgs#yarn2nix > yarn.nix
+rm -f package.json

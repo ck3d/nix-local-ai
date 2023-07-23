@@ -5,5 +5,6 @@ in
 {
   nix-local-ai = {
     local-ai = callPackage ./local-ai { };
+    flowise = callPackage ./flowise { };
   };
 }
