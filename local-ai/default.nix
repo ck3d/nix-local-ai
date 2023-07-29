@@ -8,12 +8,20 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
+    rev = "f3a6ee0ef53d667f110d28fcf9b808bdca741c07";
+    hash = "sha256-0xsGukU/MBohaszoglQT68eoDn26q1QdwhfQ2Z9bxh0=";
+    fetchSubmodules = true;
+  };
+
+  go-llama-grammar = fetchFromGitHub {
+    owner = "go-skynet";
+    repo = "go-llama.cpp";
     rev = "cb8d7cd4cb95725a04504a9e3a26dd72a12b69ac";
     hash = "sha256-l1E85bSMm5S0bIBoPRGdzOmHtStAwufDQgSx8bV1HV4=";
     fetchSubmodules = true;
   };
 
-  llama_cpp = fetchFromGitHub {
+  llama_cpp_grammar = fetchFromGitHub {
     owner = "mudler";
     repo = "llama.cpp";
     rev = "48ce8722a05a018681634af801fd0fd45b3a87cc";
@@ -41,8 +49,8 @@ let
   gpt4all = fetchFromGitHub {
     owner = "nomic-ai";
     repo = "gpt4all";
-    rev = "cfd70b69fcf5e587b8e0e3e9b9aaa90e19cbbc51";
-    hash = "sha256-1Fpi1wymSg1B8hAEIKK8Z57YcZgTEznClBuDZzwcryc=";
+    rev = "8aba2c9009fb6bc723f623c614e265b41722e4e3";
+    hash = "sha256-xZoFZjq2/lO6vSM4mXt3aiPnxkPMVa3nElF0JVlK+Bw=";
     fetchSubmodules = true;
   };
 
@@ -73,8 +81,8 @@ let
   go-bert = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-bert.cpp";
-    rev = "6069103f54b9969c02e789d0fb12a23bd614285f";
-    hash = "sha256-MadP8/SMJGfZTInVn2R2HeOUsvZsPScnfw6+xc3pBOc=";
+    rev = "6abe312cded14042f6b7c3cd8edf082713334a4d";
+    hash = "sha256-lh9cvXc032Eq31kysxFOkRd0zPjsCznRl0tzg9P2ygo=";
     fetchSubmodules = true;
   };
 
@@ -97,13 +105,13 @@ let
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "1.21.0";
+  version = "1.22.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-uOeKT9BsTWfpPaRk/7jh+5fq8IlEeDQ0fi9b3TnF8iM=";
+    hash = "sha256-9pRrJ/oQTFKg0jhXqJAB1wQu/JGH+JMsYyvfdKJueD0=";
   };
 
   vendorSha256 = "sha256-JTqaDKJikH9xWxhFwI3ZrKz1srlT1Dx1my4WcTB/dWE=";
@@ -116,7 +124,8 @@ buildGoModule rec {
   postPatch = ''
     sed -i Makefile \
       -e 's;git clone.*go-llama$;cp -r --no-preserve=mode,ownership ${go-llama} go-llama;' \
-      -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp} llama\.cpp;' \
+      -e 's;git clone.*go-llama-grammar$;cp -r --no-preserve=mode,ownership ${go-llama-grammar} go-llama-grammar;' \
+      -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp_grammar} llama\.cpp;' \
       -e 's;git clone.*go-ggllm$;cp -r --no-preserve=mode,ownership ${go-ggllm} go-ggllm;' \
       -e 's;git clone.*go-ggml-transformers$;cp -r --no-preserve=mode,ownership ${go-ggml-transformers} go-ggml-transformers;' \
       -e 's;git clone.*gpt4all$;cp -r --no-preserve=mode,ownership ${gpt4all} gpt4all;' \
