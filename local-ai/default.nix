@@ -8,16 +8,8 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "f3a6ee0ef53d667f110d28fcf9b808bdca741c07";
-    hash = "sha256-0xsGukU/MBohaszoglQT68eoDn26q1QdwhfQ2Z9bxh0=";
-    fetchSubmodules = true;
-  };
-
-  go-llama-grammar = fetchFromGitHub {
-    owner = "go-skynet";
-    repo = "go-llama.cpp";
-    rev = "cb8d7cd4cb95725a04504a9e3a26dd72a12b69ac";
-    hash = "sha256-l1E85bSMm5S0bIBoPRGdzOmHtStAwufDQgSx8bV1HV4=";
+    rev = "6ba16de8e965e5aa0f32d25ef9d6149bb6586565";
+    hash = "sha256-N7kq9SQ5ih4c1GpxA8Y6dtGj+kvR9uFJMojlFYe6ti8=";
     fetchSubmodules = true;
   };
 
@@ -49,8 +41,8 @@ let
   gpt4all = fetchFromGitHub {
     owner = "nomic-ai";
     repo = "gpt4all";
-    rev = "8aba2c9009fb6bc723f623c614e265b41722e4e3";
-    hash = "sha256-xZoFZjq2/lO6vSM4mXt3aiPnxkPMVa3nElF0JVlK+Bw=";
+    rev = "cbdcde8b75868e145b973725c7c18970091a7f2f";
+    hash = "sha256-rSB9DN7oOl1Lt/Yas/9QUdLtv4atmwU/pIRsd4qyvXM=";
     fetchSubmodules = true;
   };
 
@@ -105,16 +97,16 @@ let
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "1.22.0";
+  version = "1.23.1";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-9pRrJ/oQTFKg0jhXqJAB1wQu/JGH+JMsYyvfdKJueD0=";
+    hash = "sha256-a1ThhXUaPtqvwCrjOWBNw0vhlCOyx5IP1RwBmTkeZPk=";
   };
 
-  vendorSha256 = "sha256-JTqaDKJikH9xWxhFwI3ZrKz1srlT1Dx1my4WcTB/dWE=";
+  vendorSha256 = "sha256-OadKS/aBHJG4Q69xfh09ZkZPrQEF6Q465kdbvzIoQBk=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
@@ -124,7 +116,6 @@ buildGoModule rec {
   postPatch = ''
     sed -i Makefile \
       -e 's;git clone.*go-llama$;cp -r --no-preserve=mode,ownership ${go-llama} go-llama;' \
-      -e 's;git clone.*go-llama-grammar$;cp -r --no-preserve=mode,ownership ${go-llama-grammar} go-llama-grammar;' \
       -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp_grammar} llama\.cpp;' \
       -e 's;git clone.*go-ggllm$;cp -r --no-preserve=mode,ownership ${go-ggllm} go-ggllm;' \
       -e 's;git clone.*go-ggml-transformers$;cp -r --no-preserve=mode,ownership ${go-ggml-transformers} go-ggml-transformers;' \
