@@ -8,8 +8,8 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "6ba16de8e965e5aa0f32d25ef9d6149bb6586565";
-    hash = "sha256-N7kq9SQ5ih4c1GpxA8Y6dtGj+kvR9uFJMojlFYe6ti8=";
+    rev = "50cee7712066d9e38306eccadcfbb44ea87df4b7";
+    hash = "sha256-5qwUSg56fyHk5x8NgwLrgl+9Ibl2GTBP1Aq5sAvTs+s=";
     fetchSubmodules = true;
   };
 
@@ -41,8 +41,8 @@ let
   gpt4all = fetchFromGitHub {
     owner = "nomic-ai";
     repo = "gpt4all";
-    rev = "cbdcde8b75868e145b973725c7c18970091a7f2f";
-    hash = "sha256-rSB9DN7oOl1Lt/Yas/9QUdLtv4atmwU/pIRsd4qyvXM=";
+    rev = "c449b71b56de1ced375a64a986381cf70cec3080";
+    hash = "sha256-AsWbCOCBs/A87c6S00NoIj1AbdN5RjZlCxzqhaY+Hjk=";
     fetchSubmodules = true;
   };
 
@@ -97,16 +97,16 @@ let
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "1.23.1";
+  version = "1.23.2";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-a1ThhXUaPtqvwCrjOWBNw0vhlCOyx5IP1RwBmTkeZPk=";
+    hash = "sha256-XcxuF2ZRGk56yiyFbxATETSUU3VvhAWZBgn6++Ql3EQ=";
   };
 
-  vendorSha256 = "sha256-OadKS/aBHJG4Q69xfh09ZkZPrQEF6Q465kdbvzIoQBk=";
+  vendorSha256 = "sha256-G+veVzL5+hTiLVMwTlq4EDEdL4LeEGmRxDus/gbktYc=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
