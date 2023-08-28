@@ -2,10 +2,18 @@
 , fetchFromGitHub
 , ncurses
 , cmake
-, buildGoModule
+, buildGo121Module
 }:
 let
   go-llama = fetchFromGitHub {
+    owner = "go-skynet";
+    repo = "go-llama.cpp";
+    rev = "bf63302a2be787674e6ca4227a8aaeb95a8eb6b1";
+    hash = "sha256-8MUQvLuFKWyvWqyg0IAysXEHXeA/S/2C5l1Lm9/Lp/Y=";
+    fetchSubmodules = true;
+  };
+
+  go-llama-stable = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
     rev = "50cee7712066d9e38306eccadcfbb44ea87df4b7";
@@ -41,8 +49,8 @@ let
   gpt4all = fetchFromGitHub {
     owner = "nomic-ai";
     repo = "gpt4all";
-    rev = "c449b71b56de1ced375a64a986381cf70cec3080";
-    hash = "sha256-AsWbCOCBs/A87c6S00NoIj1AbdN5RjZlCxzqhaY+Hjk=";
+    rev = "27a8b020c36b0df8f8b82a252d261cda47cf44b8";
+    hash = "sha256-djq1eK6ncvhkO3MNDgasDBUY/7WWcmZt/GJsHAulLdI=";
     fetchSubmodules = true;
   };
 
@@ -95,18 +103,18 @@ let
   };
 
 in
-buildGoModule rec {
+buildGo121Module rec {
   pname = "local-ai";
-  version = "1.23.2";
+  version = "1.25.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-XcxuF2ZRGk56yiyFbxATETSUU3VvhAWZBgn6++Ql3EQ=";
+    hash = "sha256-bk9mYIgwZJpLB9+aOYM2cjhOLztT8Z2Ftt++GPHptS8=";
   };
 
-  vendorSha256 = "sha256-G+veVzL5+hTiLVMwTlq4EDEdL4LeEGmRxDus/gbktYc=";
+  vendorSha256 = "sha256-7ts5YKHECeWs/PW7XHQtMLh/BNhL5BAGhRCMWKCb2Ic=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
@@ -116,6 +124,7 @@ buildGoModule rec {
   postPatch = ''
     sed -i Makefile \
       -e 's;git clone.*go-llama$;cp -r --no-preserve=mode,ownership ${go-llama} go-llama;' \
+      -e 's;git clone.*go-llama-stable$;cp -r --no-preserve=mode,ownership ${go-llama-stable} go-llama-stable;' \
       -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp_grammar} llama\.cpp;' \
       -e 's;git clone.*go-ggllm$;cp -r --no-preserve=mode,ownership ${go-ggllm} go-ggllm;' \
       -e 's;git clone.*go-ggml-transformers$;cp -r --no-preserve=mode,ownership ${go-ggml-transformers} go-ggml-transformers;' \
