@@ -1,0 +1,18 @@
+diff --git a/pages/_app.tsx b/pages/_app.tsx
+index ad28961..644aad1 100644
+--- a/pages/_app.tsx
++++ b/pages/_app.tsx
+@@ -3,11 +3,11 @@ import { QueryClient, QueryClientProvider } from 'react-query';
+ 
+ import { appWithTranslation } from 'next-i18next';
+ import type { AppProps } from 'next/app';
+-import { Inter } from 'next/font/google';
++import localFont from 'next/font/local';
+ 
+ import '@/styles/globals.css';
+ 
+-const inter = Inter({ subsets: ['latin'] });
++const inter = localFont({ src: 'Inter-Regular.otf' });
+ 
+ function App({ Component, pageProps }: AppProps<{}>) {
+   const queryClient = new QueryClient();
