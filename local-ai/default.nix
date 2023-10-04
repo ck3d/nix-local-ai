@@ -8,8 +8,8 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "bf63302a2be787674e6ca4227a8aaeb95a8eb6b1";
-    hash = "sha256-8MUQvLuFKWyvWqyg0IAysXEHXeA/S/2C5l1Lm9/Lp/Y=";
+    rev = "d9f6176409de0a2b5ce798de502545c6721e346e";
+    hash = "sha256-nuvmYnTwZvVIimFFrpjoFLYCbwF3qwy67EwpAlF1+gQ=";
     fetchSubmodules = true;
   };
 
@@ -105,16 +105,16 @@ let
 in
 buildGo121Module rec {
   pname = "local-ai";
-  version = "1.25.0";
+  version = "1.30.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-bk9mYIgwZJpLB9+aOYM2cjhOLztT8Z2Ftt++GPHptS8=";
+    hash = "sha256-pWJbzJhraBAfm64uy0J3z5OFouIURTd+r1htvysNj1g=";
   };
 
-  vendorSha256 = "sha256-7ts5YKHECeWs/PW7XHQtMLh/BNhL5BAGhRCMWKCb2Ic=";
+  vendorSha256 = "sha256-r4JCLKwM1ytAwDgrIdBoCbL8Oas6xJqEcGtHB+R7lFI=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
