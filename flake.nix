@@ -17,6 +17,7 @@
             pkgs = import nixpkgs {
               inherit system;
               overlays = builtins.attrValues overlays;
+              config = { allowUnfree = true; };
             };
           in
           pkgs.nix-local-ai

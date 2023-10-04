@@ -1,8 +1,12 @@
 { stdenv
+, lib
 , fetchFromGitHub
 , ncurses
 , cmake
 , buildGo121Module
+, cudaPackages
+, makeWrapper
+, buildType ? ""
 }:
 let
   go-llama = fetchFromGitHub {
@@ -147,15 +151,32 @@ buildGo121Module rec {
   proxyVendor = true;
 
   buildPhase = ''
-    make VERSION=v${version} build
+    make \
+      VERSION=v${version} \
+      BUILD_TYPE=${buildType} \
+      build
   '';
 
   installPhase = ''
-    install -Dt $out/bin local-ai
+    install -Dt $out/bin ${pname}
+  '';
+
+  buildInputs =
+    lib.optional (buildType == "cublas") cudaPackages.cudatoolkit;
+
+  # patching rpath with patchelf doens't work. The execuable
+  # raises an segmentation fault
+  postFixup = lib.optionalString (buildType == "cublas") ''
+    wrapProgram $out/bin/${pname} \
+      --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib"
   '';
 
   nativeBuildInputs = [
     ncurses
     cmake
+  ]
+  ++ lib.optionals (buildType == "cublas") [
+    cudaPackages.cuda_nvcc
+    makeWrapper
   ];
 }
