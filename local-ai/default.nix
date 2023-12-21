@@ -2,6 +2,10 @@
 , lib
 , fetchFromGitHub
 , ncurses
+, abseil-cpp
+, protobuf
+, grpc
+, openssl
 , cmake
 , buildGo121Module
 , cudaPackages
@@ -12,8 +16,8 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "d9f6176409de0a2b5ce798de502545c6721e346e";
-    hash = "sha256-nuvmYnTwZvVIimFFrpjoFLYCbwF3qwy67EwpAlF1+gQ=";
+    rev = "aeba71ee842819da681ea537e78846dc75949ac0";
+    hash = "sha256-ELoaJg7wOHloQws+do6TZUo7zOxUP0E85v80BlpUOJA=";
     fetchSubmodules = true;
   };
 
@@ -25,6 +29,14 @@ let
     fetchSubmodules = true;
   };
 
+  llama_cpp = fetchFromGitHub {
+    owner = "ggerganov";
+    repo = "llama.cpp";
+    rev = "6e08281e588bbba1a5d180290a94a43f167f3a1a";
+    hash = "sha256-ynBRj5xWj+aIbFrAEWB2PpAlGMz5KtiwqGViUF2nLuQ=";
+    fetchSubmodules = true;
+  };
+
   llama_cpp_grammar = fetchFromGitHub {
     owner = "mudler";
     repo = "llama.cpp";
@@ -32,15 +44,6 @@ let
     hash = "sha256-V2MrTl3AZc0oMV6A0JkLzsEbcPOpLTQKzX84Y1j3mHA=";
     fetchSubmodules = true;
   };
-
-  go-ggllm = fetchFromGitHub {
-    owner = "mudler";
-    repo = "go-ggllm.cpp";
-    rev = "862477d16eefb0805261c19c9b0d053e3b2b684b";
-    hash = "sha256-WMinA9eFsuYqNywBqlAz2n4BvD6RCfi6xzwyZQCAHW4=";
-    fetchSubmodules = true;
-  };
-
 
   go-ggml-transformers = fetchFromGitHub {
     owner = "go-skynet";
@@ -90,14 +93,6 @@ let
     fetchSubmodules = true;
   };
 
-  bloomz = fetchFromGitHub {
-    owner = "go-skynet";
-    repo = "bloomz.cpp";
-    rev = "1834e77b83faafe912ad4092ccf7f77937349e2f";
-    hash = "sha256-Ys/kjBL8WMuByUSdjxtc5bCNWI04CcENuwRukhvvlw0=";
-    fetchSubmodules = true;
-  };
-
   go-stable-diffusion = fetchFromGitHub {
     owner = "mudler";
     repo = "go-stable-diffusion";
@@ -109,16 +104,16 @@ let
 in
 buildGo121Module rec {
   pname = "local-ai";
-  version = "1.30.0";
+  version = "1.40.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-pWJbzJhraBAfm64uy0J3z5OFouIURTd+r1htvysNj1g=";
+    hash = "sha256-qBRcOVS0+cRfABvfble2XtNa+KQhvL8Xawk+fuAEuh8=";
   };
 
-  vendorHash = "sha256-r4JCLKwM1ytAwDgrIdBoCbL8Oas6xJqEcGtHB+R7lFI=";
+  vendorHash = "sha256-dU/VzQUTqVL9XvUlgsNJMJ9JpmwI5MWKjjQ5L+k3wvg=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
@@ -130,17 +125,19 @@ buildGo121Module rec {
       -e 's;git clone.*go-llama$;cp -r --no-preserve=mode,ownership ${go-llama} go-llama;' \
       -e 's;git clone.*go-llama-stable$;cp -r --no-preserve=mode,ownership ${go-llama-stable} go-llama-stable;' \
       -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp_grammar} llama\.cpp;' \
-      -e 's;git clone.*go-ggllm$;cp -r --no-preserve=mode,ownership ${go-ggllm} go-ggllm;' \
       -e 's;git clone.*go-ggml-transformers$;cp -r --no-preserve=mode,ownership ${go-ggml-transformers} go-ggml-transformers;' \
       -e 's;git clone.*gpt4all$;cp -r --no-preserve=mode,ownership ${gpt4all} gpt4all;' \
       -e 's;git clone.*go-piper$;cp -r --no-preserve=mode,ownership ${go-piper} go-piper;' \
       -e 's;git clone.*go-rwkv$;cp -r --no-preserve=mode,ownership ${go-rwkv} go-rwkv;' \
       -e 's;git clone.*whisper\.cpp\.git$;cp -r --no-preserve=mode,ownership ${whisper} whisper\.cpp;' \
       -e 's;git clone.*go-bert$;cp -r --no-preserve=mode,ownership ${go-bert} go-bert;' \
-      -e 's;git clone.*bloomz$;cp -r --no-preserve=mode,ownership ${bloomz} bloomz;' \
       -e 's;git clone.*diffusion$;cp -r --no-preserve=mode,ownership ${go-stable-diffusion} go-stable-diffusion;' \
       -e 's, && git checkout.*,,g' \
       -e '/mod download/ d'
+
+    sed -i backend/cpp/llama/Makefile \
+      -e 's;git clone.*llama\.cpp$;cp -r --no-preserve=mode,ownership ${llama_cpp} llama.cpp;' \
+      -e 's, && git checkout.*,,g' \
   '';
 
   modBuildPhase = ''
@@ -161,8 +158,13 @@ buildGo121Module rec {
     install -Dt $out/bin ${pname}
   '';
 
-  buildInputs =
-    lib.optional (buildType == "cublas") cudaPackages.cudatoolkit;
+  buildInputs = [
+    abseil-cpp
+    protobuf
+    grpc
+    openssl
+  ]
+  ++ lib.optional (buildType == "cublas") cudaPackages.cudatoolkit;
 
   # patching rpath with patchelf doens't work. The execuable
   # raises an segmentation fault
