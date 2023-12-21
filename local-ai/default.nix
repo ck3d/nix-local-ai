@@ -6,10 +6,13 @@
 , protobuf
 , grpc
 , openssl
+, openblas
 , cmake
 , buildGoModule
+, pkg-config
 , cudaPackages
 , makeWrapper
+, runCommand
 , buildType ? ""
 }:
 let
@@ -36,6 +39,12 @@ let
     hash = "sha256-NjAHC1qushEbadHBCfM7ddQa1z8mV7bsNUdGqDpNdrY=";
     fetchSubmodules = true;
   };
+
+  llama_cpp' = runCommand "llama_cpp_src" { } ''
+    cp -r --no-preserve=mode,ownership ${llama_cpp} $out
+    sed -i $out/CMakeLists.txt \
+      -e 's;pkg_check_modules(DepBLAS REQUIRED openblas);pkg_check_modules(DepBLAS REQUIRED openblas64);'
+  '';
 
   llama_cpp_grammar = fetchFromGitHub {
     owner = "mudler";
@@ -137,12 +146,14 @@ buildGoModule rec {
         -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
         -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
         -e 's, && git checkout.*,,g' \
-        -e '/mod download/ d'
+        -e '/mod download/ d' \
 
       sed -i backend/cpp/llama/Makefile \
-        -e 's;git clone.*llama\.cpp$;${cp} ${llama_cpp} llama\.cpp;' \
+        -e 's;git clone.*llama\.cpp$;${cp} ${llama_cpp'} llama\.cpp;' \
         -e 's, && git checkout.*,,g' \
-    '';
+
+    ''
+  ;
 
   modBuildPhase = ''
     mkdir sources
@@ -170,21 +181,27 @@ buildGoModule rec {
     grpc
     openssl
   ]
-  ++ lib.optional (buildType == "cublas") cudaPackages.cudatoolkit;
+  ++ lib.optional (buildType == "cublas") cudaPackages.cudatoolkit
+  ++ lib.optional (buildType == "openblas") openblas.dev
+  ;
 
   # patching rpath with patchelf doens't work. The execuable
   # raises an segmentation fault
   postFixup = lib.optionalString (buildType == "cublas") ''
     wrapProgram $out/bin/${pname} \
       --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib"
+  ''
+  + lib.optionalString (buildType == "openblas") ''
+    wrapProgram $out/bin/${pname} \
+      --prefix LD_LIBRARY_PATH : "${openblas}/lib"
   '';
 
   nativeBuildInputs = [
     ncurses
     cmake
-  ]
-  ++ lib.optionals (buildType == "cublas") [
-    cudaPackages.cuda_nvcc
     makeWrapper
-  ];
+  ]
+  ++ lib.optional (buildType == "openblas") pkg-config
+  ++ lib.optional (buildType == "cublas") cudaPackages.cuda_nvcc
+  ;
 }
