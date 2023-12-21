@@ -5,7 +5,7 @@ nixpkgs=github:nixos/nixpkgs/release-23.11
 nix build ..#flowise.src
 cp -f result/package.json .
 rm result
-nix run $nixpkgs#yarn -- install --force --ignore-scripts --production=true
+nix run $nixpkgs#yarn -- install --force --ignore-scripts --no-default-rc --production=true
 rm -rf node_modules
 nix run $nixpkgs#yarn2nix > yarn.nix
 rm -f package.json
