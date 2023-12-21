@@ -16,12 +16,12 @@
 }:
 let
   pname = "flowise";
-  version = "1.3.6";
+  version = "1.3.7";
   vanillaSrc = fetchFromGitHub {
     owner = "FlowiseAI";
     repo = "Flowise";
     rev = "${pname}@${version}";
-    hash = "sha256-7KYxS2YJROUttK+GF9YlgOG4VLQWtrQoMXH3MCqQAoQ=";
+    hash = "sha256-ACk4Mz/ZeylnHzuo+pwUPLXoNEnU+zLqr+lfDmruLQU=";
   };
 
   src = runCommand "patched-source"
