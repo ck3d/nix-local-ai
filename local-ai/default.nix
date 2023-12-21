@@ -7,7 +7,7 @@
 , grpc
 , openssl
 , cmake
-, buildGo121Module
+, buildGoModule
 , cudaPackages
 , makeWrapper
 , buildType ? ""
@@ -21,7 +21,7 @@ let
     fetchSubmodules = true;
   };
 
-  go-llama-stable = fetchFromGitHub {
+  go-llama-ggml = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
     rev = "50cee7712066d9e38306eccadcfbb44ea87df4b7";
@@ -32,8 +32,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "6e08281e588bbba1a5d180290a94a43f167f3a1a";
-    hash = "sha256-ynBRj5xWj+aIbFrAEWB2PpAlGMz5KtiwqGViUF2nLuQ=";
+    rev = "88ae8952b65cbf32eb1f5703681ea592e510e570";
+    hash = "sha256-NjAHC1qushEbadHBCfM7ddQa1z8mV7bsNUdGqDpNdrY=";
     fetchSubmodules = true;
   };
 
@@ -64,8 +64,8 @@ let
   go-piper = fetchFromGitHub {
     owner = "mudler";
     repo = "go-piper";
-    rev = "56b8a81b4760a6fbee1a82e62f007ae7e8f010a7";
-    hash = "sha256-5AAYLG2rGA4uf93SBX1poeW8ck/B4ZAsPxIHrQ6BytQ=";
+    rev = "d6b6275ba037dabdba4a8b65dfdf6b2a73a67f07";
+    hash = "sha256-p589giBsEPsoR+RQU7qfGfpfqpTdBI51lvnLs4DmE0Y=";
     fetchSubmodules = true;
   };
 
@@ -80,8 +80,8 @@ let
   whisper = fetchFromGitHub {
     owner = "ggerganov";
     repo = "whisper.cpp";
-    rev = "85ed71aaec8e0612a84c0b67804bde75aa75a273";
-    hash = "sha256-y36DZc+w0CJMI8DA77NZqLh/x1oiaiQlmDuEYd7Vt/k=";
+    rev = "940de9dbe9c90624dc99521cb34c8a97b86d543c";
+    hash = "sha256-6Bo3kVVqv2MOrQ9PInI/ZatED00Ir5rnjW16MqRt4i4=";
     fetchSubmodules = true;
   };
 
@@ -96,51 +96,56 @@ let
   go-stable-diffusion = fetchFromGitHub {
     owner = "mudler";
     repo = "go-stable-diffusion";
-    rev = "d89260f598afb809279bc72aa0107b4292587632";
-    hash = "sha256-B3irqzaWKcfZd129SaIQrdIHyWhmLy9zCwxwAaivRnA=";
+    rev = "902db5f066fd137697e3b69d0fa10d4782bd2c2f";
+    hash = "sha256-MbVYeWQF/aJNsg2NpTMVx5tD31BK5pQ8Zg92uoWRkcU=";
     fetchSubmodules = true;
   };
 
 in
-buildGo121Module rec {
+buildGoModule rec {
   pname = "local-ai";
-  version = "1.40.0";
+  version = "2.1.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-qBRcOVS0+cRfABvfble2XtNa+KQhvL8Xawk+fuAEuh8=";
+    hash = "sha256-6YdpYVihdBtqt98xUILm2bIp+3jf2aDIv+NCImwfz14=";
   };
 
-  vendorHash = "sha256-dU/VzQUTqVL9XvUlgsNJMJ9JpmwI5MWKjjQ5L+k3wvg=";
+  vendorHash = "sha256-nKeNEaFfPCnPCEW7pvTNjCVawa3aX0M/6skmfZYO0DI=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
   # when building jtreg
   env.NIX_CFLAGS_COMPILE = "-Wformat";
 
-  postPatch = ''
-    sed -i Makefile \
-      -e 's;git clone.*go-llama$;cp -r --no-preserve=mode,ownership ${go-llama} go-llama;' \
-      -e 's;git clone.*go-llama-stable$;cp -r --no-preserve=mode,ownership ${go-llama-stable} go-llama-stable;' \
-      -e 's;git clone.*llama\.cpp.*$;cp -r --no-preserve=mode,ownership ${llama_cpp_grammar} llama\.cpp;' \
-      -e 's;git clone.*go-ggml-transformers$;cp -r --no-preserve=mode,ownership ${go-ggml-transformers} go-ggml-transformers;' \
-      -e 's;git clone.*gpt4all$;cp -r --no-preserve=mode,ownership ${gpt4all} gpt4all;' \
-      -e 's;git clone.*go-piper$;cp -r --no-preserve=mode,ownership ${go-piper} go-piper;' \
-      -e 's;git clone.*go-rwkv$;cp -r --no-preserve=mode,ownership ${go-rwkv} go-rwkv;' \
-      -e 's;git clone.*whisper\.cpp\.git$;cp -r --no-preserve=mode,ownership ${whisper} whisper\.cpp;' \
-      -e 's;git clone.*go-bert$;cp -r --no-preserve=mode,ownership ${go-bert} go-bert;' \
-      -e 's;git clone.*diffusion$;cp -r --no-preserve=mode,ownership ${go-stable-diffusion} go-stable-diffusion;' \
-      -e 's, && git checkout.*,,g' \
-      -e '/mod download/ d'
+  postPatch =
+    let
+      cp = "cp -r --no-preserve=mode,ownership";
+    in
+    ''
+      sed -i Makefile \
+        -e 's;git clone.*go-llama$;${cp} ${go-llama} sources/go-llama;' \
+        -e 's;git clone.*go-llama-ggml$;${cp} ${go-llama-ggml} sources/go-llama-ggml;' \
+        -e 's;git clone.*llama\.cpp.*$;${cp} ${llama_cpp_grammar} sources/llama\.cpp;' \
+        -e 's;git clone.*go-ggml-transformers$;${cp} ${go-ggml-transformers} sources/go-ggml-transformers;' \
+        -e 's;git clone.*gpt4all$;${cp} ${gpt4all} sources/gpt4all;' \
+        -e 's;git clone.*go-piper$;${cp} ${go-piper} sources/go-piper;' \
+        -e 's;git clone.*go-rwkv$;${cp} ${go-rwkv} sources/go-rwkv;' \
+        -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
+        -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
+        -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
+        -e 's, && git checkout.*,,g' \
+        -e '/mod download/ d'
 
-    sed -i backend/cpp/llama/Makefile \
-      -e 's;git clone.*llama\.cpp$;cp -r --no-preserve=mode,ownership ${llama_cpp} llama.cpp;' \
-      -e 's, && git checkout.*,,g' \
-  '';
+      sed -i backend/cpp/llama/Makefile \
+        -e 's;git clone.*llama\.cpp$;${cp} ${llama_cpp} llama\.cpp;' \
+        -e 's, && git checkout.*,,g' \
+    '';
 
   modBuildPhase = ''
+    mkdir sources
     make prepare-sources
     go mod tidy -v
   '';
@@ -148,6 +153,7 @@ buildGo121Module rec {
   proxyVendor = true;
 
   buildPhase = ''
+    mkdir sources
     make \
       VERSION=v${version} \
       BUILD_TYPE=${buildType} \
