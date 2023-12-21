@@ -3,8 +3,16 @@
 , fetchFromGitHub
 , lib
 , makeWrapper
-, inter
-}: buildNpmPackage rec {
+, fetchzip
+}:
+let
+  inter = fetchzip {
+    url = "https://github.com/rsms/inter/releases/download/v3.19/Inter-3.19.zip";
+    stripRoot = false;
+    hash = "sha256-6kUQUTFtxiJEU6sYC6HzMwm1H4wvaKIoxoY3F6GJJa8=";
+  };
+in
+buildNpmPackage rec {
   pname = "chatbot-ui";
   version = "20230820";
 
@@ -26,7 +34,7 @@
   ];
 
   postConfigure = ''
-    cp ${inter}/share/fonts/opentype/Inter-Regular.otf pages
+    cp "${inter}/Inter Desktop/Inter-Regular.otf" pages
   '';
 
   postInstall = ''

@@ -118,7 +118,7 @@ buildGo121Module rec {
     hash = "sha256-pWJbzJhraBAfm64uy0J3z5OFouIURTd+r1htvysNj1g=";
   };
 
-  vendorSha256 = "sha256-r4JCLKwM1ytAwDgrIdBoCbL8Oas6xJqEcGtHB+R7lFI=";
+  vendorHash = "sha256-r4JCLKwM1ytAwDgrIdBoCbL8Oas6xJqEcGtHB+R7lFI=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`

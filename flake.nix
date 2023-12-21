@@ -2,7 +2,7 @@
   description = "Nix package of LocalAI";
 
   # package go_1_21 is needed
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/release-23.11";
 
   outputs = { self, nixpkgs }:
     let

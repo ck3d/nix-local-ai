@@ -1,6 +1,6 @@
 #!/bin/sh -eux
 
-nixpkgs=github:nixos/nixpkgs/release-23.05
+nixpkgs=github:nixos/nixpkgs/release-23.11
 
 nix build ..#flowise.src
 cp -f result/package.json .
