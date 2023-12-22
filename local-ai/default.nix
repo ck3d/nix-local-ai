@@ -35,8 +35,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "88ae8952b65cbf32eb1f5703681ea592e510e570";
-    hash = "sha256-NjAHC1qushEbadHBCfM7ddQa1z8mV7bsNUdGqDpNdrY=";
+    rev = "328b83de23b33240e28f4e74900d1d06726f5eb1";
+    hash = "sha256-Nc9r5wU8OB6AUcb0By5fWMGyFZL5FUP7Oe/aVkiouWg=";
     fetchSubmodules = true;
   };
 
@@ -81,16 +81,16 @@ let
   go-rwkv = fetchFromGitHub {
     owner = "donomii";
     repo = "go-rwkv.cpp";
-    rev = "f5a8c45396741470583f59b916a2a7641e63bcd0";
-    hash = "sha256-+p0J9c5EKf/KVSb8xtUCXo9cYfX1p5Ex7yRtOsEKQ1g=";
+    rev = "8f6d062fa80ed4ac4a00d1ac53aa4de54183fffe";
+    hash = "sha256-ueSoJ1MHXvBPfCyg63C3bE5oxo5Bkd7k7mle7cntqCE=";
     fetchSubmodules = true;
   };
 
   whisper = fetchFromGitHub {
     owner = "ggerganov";
     repo = "whisper.cpp";
-    rev = "940de9dbe9c90624dc99521cb34c8a97b86d543c";
-    hash = "sha256-6Bo3kVVqv2MOrQ9PInI/ZatED00Ir5rnjW16MqRt4i4=";
+    rev = "9286d3f584240ba58bd44a1bd1e85141579c78d4";
+    hash = "sha256-hLPtfJVYiopnSdDqu9n/k9Avb4ibgbjmrVr81BTWW/w=";
     fetchSubmodules = true;
   };
 
@@ -113,13 +113,13 @@ let
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "2.1.0";
+  version = "2.2.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-6YdpYVihdBtqt98xUILm2bIp+3jf2aDIv+NCImwfz14=";
+    hash = "sha256-u4QMtaWt8SsvgHWr0xvdyHYx07R2kyGLaWeDlXEZcQ4=";
   };
 
   vendorHash = "sha256-nKeNEaFfPCnPCEW7pvTNjCVawa3aX0M/6skmfZYO0DI=";
