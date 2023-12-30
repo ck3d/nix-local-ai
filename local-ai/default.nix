@@ -35,8 +35,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "328b83de23b33240e28f4e74900d1d06726f5eb1";
-    hash = "sha256-Nc9r5wU8OB6AUcb0By5fWMGyFZL5FUP7Oe/aVkiouWg=";
+    rev = "0235b9b571f3cc7d2b8836409a5404b41ce1379c";
+    hash = "sha256-4FsvGdPDK8nP1dgc3WMuy7CKqoBI/iesSO7koSvdAyc=";
     fetchSubmodules = true;
   };
 
@@ -81,8 +81,8 @@ let
   go-rwkv = fetchFromGitHub {
     owner = "donomii";
     repo = "go-rwkv.cpp";
-    rev = "8f6d062fa80ed4ac4a00d1ac53aa4de54183fffe";
-    hash = "sha256-ueSoJ1MHXvBPfCyg63C3bE5oxo5Bkd7k7mle7cntqCE=";
+    rev = "633c5a3485c403cb2520693dc0991a25dace9f0f";
+    hash = "sha256-BECmBLbtAh5pdZZz0NBLbt+BX2TaC2NjHYwSEEAFPlI=";
     fetchSubmodules = true;
   };
 
@@ -110,19 +110,27 @@ let
     fetchSubmodules = true;
   };
 
+  go-tiny-dream = fetchFromGitHub {
+    owner = "M0Rf30";
+    repo = "go-tiny-dream";
+    rev = "772a9c0d9aaf768290e63cca3c904fe69faf677a";
+    hash = "sha256-r+wzFIjaI6cxAm/eXN3q8LRZZz+lE5EA4lCTk5+ZnIY=";
+    fetchSubmodules = true;
+  };
+
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "2.2.0";
+  version = "2.3.1";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-u4QMtaWt8SsvgHWr0xvdyHYx07R2kyGLaWeDlXEZcQ4=";
+    hash = "sha256-PT+Ylgp6hnU6ROzi2TyvO2emFKZziTuCrfga5sAXTL0=";
   };
 
-  vendorHash = "sha256-nKeNEaFfPCnPCEW7pvTNjCVawa3aX0M/6skmfZYO0DI=";
+  vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
@@ -145,6 +153,7 @@ buildGoModule rec {
         -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
         -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
         -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
+        -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream} sources/go-tiny-dream;' \
         -e 's, && git checkout.*,,g' \
         -e '/mod download/ d' \
 
