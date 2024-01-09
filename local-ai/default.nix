@@ -46,14 +46,6 @@ let
       -e 's;pkg_check_modules(DepBLAS REQUIRED openblas);pkg_check_modules(DepBLAS REQUIRED openblas64);'
   '';
 
-  llama_cpp_grammar = fetchFromGitHub {
-    owner = "mudler";
-    repo = "llama.cpp";
-    rev = "48ce8722a05a018681634af801fd0fd45b3a87cc";
-    hash = "sha256-V2MrTl3AZc0oMV6A0JkLzsEbcPOpLTQKzX84Y1j3mHA=";
-    fetchSubmodules = true;
-  };
-
   go-ggml-transformers = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-ggml-transformers.cpp";
@@ -145,7 +137,6 @@ buildGoModule rec {
       sed -i Makefile \
         -e 's;git clone.*go-llama$;${cp} ${go-llama} sources/go-llama;' \
         -e 's;git clone.*go-llama-ggml$;${cp} ${go-llama-ggml} sources/go-llama-ggml;' \
-        -e 's;git clone.*llama\.cpp.*$;${cp} ${llama_cpp_grammar} sources/llama\.cpp;' \
         -e 's;git clone.*go-ggml-transformers$;${cp} ${go-ggml-transformers} sources/go-ggml-transformers;' \
         -e 's;git clone.*gpt4all$;${cp} ${gpt4all} sources/gpt4all;' \
         -e 's;git clone.*go-piper$;${cp} ${go-piper} sources/go-piper;' \
