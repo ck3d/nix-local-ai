@@ -198,7 +198,7 @@ buildGoModule rec {
   # raises an segmentation fault
   postFixup = lib.optionalString (buildType == "cublas") ''
     wrapProgram $out/bin/${pname} \
-      --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib"
+      --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib"
   ''
   + lib.optionalString (buildType == "openblas") ''
     wrapProgram $out/bin/${pname} \
