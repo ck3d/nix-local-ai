@@ -9,6 +9,12 @@
 , openblas
   # needed for audio-to-text
 , ffmpeg
+, opencv
+, ncnn
+, sonic
+, spdlog
+, fmt
+, onnxruntime
 , cmake
 , buildGoModule
 , pkg-config
@@ -16,6 +22,15 @@
 , makeWrapper
 , runCommand
 , buildType ? ""
+  # TODO: provide the right version of ncnn
+, enableStablediffusion ? false
+  # TODO: provide onnxruntime in the right way
+, enableTts ? false
+  # ./tiny-dream/tinydream.hpp:89:13: error: call to non-'constexpr' function 'std::function<_Res(_ArgTypes ...)>::operator bool()
+  #  const [with _Res = void; _ArgTypes = {const char*, int, void*}]'
+  # TODO: fix compiler error
+  # possible workaround: Update gcc by switching nixpkgs to nixos-unstable
+, enableTinydream ? false
 }:
 let
   go-llama = fetchFromGitHub {
@@ -112,6 +127,15 @@ let
     fetchSubmodules = true;
   };
 
+  go-tiny-dream' = runCommand "go_tiny_dream_src" { } ''
+    cp -r --no-preserve=mode,ownership ${go-tiny-dream} $out
+    sed -i $out/Makefile \
+      -e 's;lib/libncnn;lib64/libncnn;g'
+  '';
+
+  GO_TAGS = lib.optional enableTinydream "tinydream"
+    ++ lib.optional enableTts "tts"
+    ++ lib.optional enableStablediffusion "stablediffusion";
 in
 buildGoModule rec {
   pname = "local-ai";
@@ -129,7 +153,8 @@ buildGoModule rec {
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
   # when building jtreg
-  env.NIX_CFLAGS_COMPILE = "-Wformat";
+  env.NIX_CFLAGS_COMPILE = "-Wformat"
+    + lib.optionalString enableStablediffusion " -isystem ${opencv}/include/opencv4";
 
   postPatch =
     let
@@ -146,7 +171,7 @@ buildGoModule rec {
         -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
         -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
         -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
-        -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream} sources/go-tiny-dream;' \
+        -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream'} sources/go-tiny-dream;' \
         -e 's, && git checkout.*,,g' \
         -e '/mod download/ d' \
 
@@ -170,6 +195,7 @@ buildGoModule rec {
     make \
       VERSION=v${version} \
       BUILD_TYPE=${buildType} \
+      GO_TAGS="${builtins.concatStringsSep " " GO_TAGS}" \
       build
   '';
 
@@ -183,6 +209,8 @@ buildGoModule rec {
     grpc
     openssl
   ]
+  ++ lib.optionals enableStablediffusion [ opencv ncnn ]
+  ++ lib.optionals enableTts [ sonic spdlog fmt onnxruntime ]
   ++ lib.optional (buildType == "cublas") cudaPackages.cudatoolkit
   ++ lib.optional (buildType == "openblas") openblas.dev
   ;
