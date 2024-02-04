@@ -7,6 +7,8 @@
 , grpc
 , openssl
 , openblas
+  # needed for audio-to-text
+, ffmpeg
 , cmake
 , buildGoModule
 , pkg-config
@@ -187,13 +189,14 @@ buildGoModule rec {
 
   # patching rpath with patchelf doens't work. The execuable
   # raises an segmentation fault
-  postFixup = lib.optionalString (buildType == "cublas") ''
+  postFixup = ''
     wrapProgram $out/bin/${pname} \
-      --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib"
-  ''
-  + lib.optionalString (buildType == "openblas") ''
-    wrapProgram $out/bin/${pname} \
-      --prefix LD_LIBRARY_PATH : "${openblas}/lib"
+  '' + lib.optionalString (buildType == "cublas") ''
+    --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib" \
+  '' + lib.optionalString (buildType == "openblas") ''
+    --prefix LD_LIBRARY_PATH : "${openblas}/lib" \
+  '' + ''
+    --prefix PATH : "${ffmpeg}/bin"
   '';
 
   nativeBuildInputs = [
