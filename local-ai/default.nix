@@ -1,4 +1,6 @@
-{ stdenv
+{
+  # tinydream need to have at least gcc13
+  gcc13Stdenv
 , lib
 , fetchFromGitHub
 , ncurses
@@ -26,10 +28,6 @@
 , enableStablediffusion ? false
   # TODO: provide onnxruntime in the right way
 , enableTts ? false
-  # ./tiny-dream/tinydream.hpp:89:13: error: call to non-'constexpr' function 'std::function<_Res(_ArgTypes ...)>::operator bool()
-  #  const [with _Res = void; _ArgTypes = {const char*, int, void*}]'
-  # TODO: fix compiler error
-  # possible workaround: Update gcc by switching nixpkgs to nixos-unstable
 , enableTinydream ? false
 }:
 let
@@ -137,7 +135,7 @@ let
     ++ lib.optional enableTts "tts"
     ++ lib.optional enableStablediffusion "stablediffusion";
 in
-buildGoModule rec {
+(buildGoModule.override { stdenv = gcc13Stdenv; }) rec {
   pname = "local-ai";
   version = "2.7.0";
 
