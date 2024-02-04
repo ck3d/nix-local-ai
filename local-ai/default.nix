@@ -37,8 +37,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "6f9939d119b2d004c264952eb510bd106455531e";
-    hash = "sha256-TfSD+ZR8TR6xhfOjMfpvcfQXCRhRnvzcNXQOYaaWzVU=";
+    rev = "6db2b41a76ee78d5efdd5c3cddd5d7ad3f646855";
+    hash = "sha256-fI5V4nly0G+Xh2VOJgf5SGGpL+qgpdrnAOtq18e81g8=";
     fetchSubmodules = true;
   };
 
@@ -115,13 +115,13 @@ let
 in
 buildGoModule rec {
   pname = "local-ai";
-  version = "2.6.1";
+  version = "2.7.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-xGbrNbHQpl9Tdh5w+Csx7mhkMDBF8JgGtIVvgOu0XWs=";
+    hash = "sha256-w5dRIqan6+4idW2dKVEH0xeQ4iAspmAnxRyGAozbRvY=";
   };
 
   vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
