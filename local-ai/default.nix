@@ -2,6 +2,7 @@
   # tinydream need to have at least gcc13
   gcc13Stdenv
 , lib
+, fetchpatch
 , fetchFromGitHub
 , ncurses
 , abseil-cpp
@@ -50,8 +51,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "6db2b41a76ee78d5efdd5c3cddd5d7ad3f646855";
-    hash = "sha256-fI5V4nly0G+Xh2VOJgf5SGGpL+qgpdrnAOtq18e81g8=";
+    rev = "4b7b38bef5addbd31f453871d79647fbae6bec8a";
+    hash = "sha256-HkfvhgJ9nPIoNF1LHrEr/ICUNvGCm7lzZpqs7pQY/cY=";
     fetchSubmodules = true;
   };
 
@@ -60,14 +61,6 @@ let
     sed -i $out/CMakeLists.txt \
       -e 's;pkg_check_modules(DepBLAS REQUIRED openblas);pkg_check_modules(DepBLAS REQUIRED openblas64);'
   '';
-
-  go-ggml-transformers = fetchFromGitHub {
-    owner = "go-skynet";
-    repo = "go-ggml-transformers.cpp";
-    rev = "ffb09d7dd71e2cbc6c5d7d05357d230eea6f369a";
-    hash = "sha256-WdCj6cfs98HvG3jnA6CWsOtACjMkhSmrKw9weHkLQQ4=";
-    fetchSubmodules = true;
-  };
 
   gpt4all = fetchFromGitHub {
     owner = "nomic-ai";
@@ -112,7 +105,7 @@ let
   go-stable-diffusion = fetchFromGitHub {
     owner = "mudler";
     repo = "go-stable-diffusion";
-    rev = "902db5f066fd137697e3b69d0fa10d4782bd2c2f";
+    rev = "d5d2be8e7e395c2d73ceef61e6fe8d240f2cd831";
     hash = "sha256-MbVYeWQF/aJNsg2NpTMVx5tD31BK5pQ8Zg92uoWRkcU=";
     fetchSubmodules = true;
   };
@@ -137,16 +130,23 @@ let
 in
 (buildGoModule.override { stdenv = gcc13Stdenv; }) rec {
   pname = "local-ai";
-  version = "2.7.0";
+  version = "2.8.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-w5dRIqan6+4idW2dKVEH0xeQ4iAspmAnxRyGAozbRvY=";
+    hash = "sha256-JwJX/zpZUKC7arntGe/quN8YPSH2C4UL9KM7YhOFTGA=";
   };
 
-  vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
+  patches = lib.optional (version == "2.8.0")
+    (fetchpatch {
+      name = "fix-drop-unused-code";
+      url = "https://github.com/mudler/LocalAI/pull/1697/commits/a4d4c26ee821482cac89fefa511808e987434654.patch";
+      hash = "sha256-37qURvdTI6lFkAepf7qsxhOVa1CXxIGSieorHxLSgRE=";
+    });
+
+  vendorHash = "sha256-XmouAnK+N41SgdUdY1RUHrG5DKLlAZNpimQCvL50zKA=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
@@ -162,7 +162,6 @@ in
       sed -i Makefile \
         -e 's;git clone.*go-llama$;${cp} ${go-llama} sources/go-llama;' \
         -e 's;git clone.*go-llama-ggml$;${cp} ${go-llama-ggml} sources/go-llama-ggml;' \
-        -e 's;git clone.*go-ggml-transformers$;${cp} ${go-ggml-transformers} sources/go-ggml-transformers;' \
         -e 's;git clone.*gpt4all$;${cp} ${gpt4all} sources/gpt4all;' \
         -e 's;git clone.*go-piper$;${cp} ${go-piper} sources/go-piper;' \
         -e 's;git clone.*go-rwkv$;${cp} ${go-rwkv} sources/go-rwkv;' \
