@@ -232,4 +232,12 @@ in
   ++ lib.optional (buildType == "openblas") pkg-config
   ++ lib.optional (buildType == "cublas") cudaPackages.cuda_nvcc
   ;
+
+  meta = with lib; {
+    description = "OpenAI alternative to run local LLMs, image and audio generation";
+    homepage = "https://localai.io";
+    license = licenses.mit;
+    maintainers = with maintainers; [ onny ck3d ];
+    platforms = platforms.linux;
+  };
 }
