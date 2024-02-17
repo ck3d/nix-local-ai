@@ -9,27 +9,36 @@
 , protobuf
 , grpc
 , openssl
-, openblas
   # needed for audio-to-text
 , ffmpeg
+, cmake
+, buildGoModule
+, makeWrapper
+, runCommand
+
+  # apply feature parameter names according to
+  # https://github.com/NixOS/rfcs/pull/169
+
+, enable_tinydream ? false
+
+, with_openblas ? false
+, openblas
+, pkg-config
+
+, with_cublas ? false
+, cudaPackages
+
+  # TODO: provide the right version of ncnn
+, with_stablediffusion ? false
 , opencv
 , ncnn
+
+  # TODO: provide onnxruntime in the right way
+, with_tts ? false
+, onnxruntime
 , sonic
 , spdlog
 , fmt
-, onnxruntime
-, cmake
-, buildGoModule
-, pkg-config
-, cudaPackages
-, makeWrapper
-, runCommand
-, buildType ? ""
-  # TODO: provide the right version of ncnn
-, enableStablediffusion ? false
-  # TODO: provide onnxruntime in the right way
-, enableTts ? false
-, enableTinydream ? false
 }:
 let
   go-llama = fetchFromGitHub {
@@ -124,9 +133,9 @@ let
       -e 's;lib/libncnn;lib64/libncnn;g'
   '';
 
-  GO_TAGS = lib.optional enableTinydream "tinydream"
-    ++ lib.optional enableTts "tts"
-    ++ lib.optional enableStablediffusion "stablediffusion";
+  GO_TAGS = lib.optional enable_tinydream "tinydream"
+    ++ lib.optional with_tts "tts"
+    ++ lib.optional with_stablediffusion "stablediffusion";
 in
 (buildGoModule.override { stdenv = gcc13Stdenv; }) rec {
   pname = "local-ai";
@@ -145,7 +154,7 @@ in
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
   # when building jtreg
   env.NIX_CFLAGS_COMPILE = "-Wformat"
-    + lib.optionalString enableStablediffusion " -isystem ${opencv}/include/opencv4";
+    + lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
 
   postPatch =
     let
@@ -180,14 +189,21 @@ in
 
   proxyVendor = true;
 
-  buildPhase = ''
-    mkdir sources
-    make \
-      VERSION=v${version} \
-      BUILD_TYPE=${buildType} \
-      GO_TAGS="${builtins.concatStringsSep " " GO_TAGS}" \
-      build
-  '';
+  buildPhase =
+    let
+      buildType =
+        if with_openblas then assert !with_cublas; "openblas"
+        else if with_cublas then "cublas"
+        else "";
+    in
+    ''
+      mkdir sources
+      make \
+        VERSION=v${version} \
+        BUILD_TYPE=${buildType} \
+        GO_TAGS="${builtins.concatStringsSep " " GO_TAGS}" \
+        build
+    '';
 
   installPhase = ''
     install -Dt $out/bin ${pname}
@@ -199,19 +215,19 @@ in
     grpc
     openssl
   ]
-  ++ lib.optionals enableStablediffusion [ opencv ncnn ]
-  ++ lib.optionals enableTts [ sonic spdlog fmt onnxruntime ]
-  ++ lib.optional (buildType == "cublas") cudaPackages.cudatoolkit
-  ++ lib.optional (buildType == "openblas") openblas.dev
+  ++ lib.optionals with_stablediffusion [ opencv ncnn ]
+  ++ lib.optionals with_tts [ sonic spdlog fmt onnxruntime ]
+  ++ lib.optional with_cublas cudaPackages.cudatoolkit
+  ++ lib.optional with_openblas openblas.dev
   ;
 
   # patching rpath with patchelf doens't work. The execuable
   # raises an segmentation fault
   postFixup = ''
     wrapProgram $out/bin/${pname} \
-  '' + lib.optionalString (buildType == "cublas") ''
+  '' + lib.optionalString with_cublas ''
     --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib" \
-  '' + lib.optionalString (buildType == "openblas") ''
+  '' + lib.optionalString with_openblas ''
     --prefix LD_LIBRARY_PATH : "${openblas}/lib" \
   '' + ''
     --prefix PATH : "${ffmpeg}/bin"
@@ -222,8 +238,8 @@ in
     cmake
     makeWrapper
   ]
-  ++ lib.optional (buildType == "openblas") pkg-config
-  ++ lib.optional (buildType == "cublas") cudaPackages.cuda_nvcc
+  ++ lib.optional with_openblas pkg-config
+  ++ lib.optional with_cublas cudaPackages.cuda_nvcc
   ;
 
   meta = with lib; {
