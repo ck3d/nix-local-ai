@@ -242,6 +242,12 @@ in
   ++ lib.optional with_cublas cudaPackages.cuda_nvcc
   ;
 
+  passthru.features = {
+    inherit
+      with_cublas with_openblas with_tts with_stablediffusion
+      enable_tinydream;
+  };
+
   meta = with lib; {
     description = "OpenAI alternative to run local LLMs, image and audio generation";
     homepage = "https://localai.io";
