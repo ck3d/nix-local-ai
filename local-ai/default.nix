@@ -19,7 +19,7 @@
   # apply feature parameter names according to
   # https://github.com/NixOS/rfcs/pull/169
 
-, enable_tinydream ? false
+, with_tinydream ? false
 
 , with_openblas ? false
 , openblas
@@ -133,7 +133,7 @@ let
       -e 's;lib/libncnn;lib64/libncnn;g'
   '';
 
-  GO_TAGS = lib.optional enable_tinydream "tinydream"
+  GO_TAGS = lib.optional with_tinydream "tinydream"
     ++ lib.optional with_tts "tts"
     ++ lib.optional with_stablediffusion "stablediffusion";
 in
@@ -245,7 +245,7 @@ in
   passthru.features = {
     inherit
       with_cublas with_openblas with_tts with_stablediffusion
-      enable_tinydream;
+      with_tinydream;
   };
 
   meta = with lib; {
