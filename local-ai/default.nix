@@ -254,5 +254,6 @@ in
     license = licenses.mit;
     maintainers = with maintainers; [ onny ck3d ];
     platforms = platforms.linux;
+    broken = with_stablediffusion || with_tts;
   };
 }
