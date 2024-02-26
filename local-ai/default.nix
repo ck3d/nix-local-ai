@@ -60,8 +60,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "f026f8120f97090d34a52b3dc023c82e0ede3f7d";
-    hash = "sha256-7TUyV0fVRnA9nstNR5j+1belYCQ9EWgaMDZqU+UMO54=";
+    rev = "fd43d66f46ee3b5345fb8a74a252d86ccd34a409";
+    hash = "sha256-kvPCEqhxgsGTP3VYM5FvJ5bS+xAb4HD/aEeiu+m/3Dk=";
     fetchSubmodules = true;
   };
 
@@ -139,16 +139,16 @@ let
 in
 (buildGoModule.override { stdenv = gcc13Stdenv; }) rec {
   pname = "local-ai";
-  version = "2.8.2";
+  version = "2.9.0";
 
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-o+UNEWKSeAI7Yr/6J5mTuCMvYXCEW3HJ36qwsxOWTeQ=";
+    hash = "sha256-vy6oyWeM0UJbtl/CmQQuNzmbTJyeKjsbyKR3P5Kb2+k=";
   };
 
-  vendorHash = "sha256-XmouAnK+N41SgdUdY1RUHrG5DKLlAZNpimQCvL50zKA=";
+  vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
 
   # Workaround for
   # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
