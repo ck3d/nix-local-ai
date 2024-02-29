@@ -198,7 +198,7 @@ buildGoModule rec {
   buildPhase =
     let
       buildType =
-        assert (lib.count lib.id [ with_openblas with_openblas with_clblas ]) <= 1;
+        assert (lib.count lib.id [ with_openblas with_cublas with_clblas ]) <= 1;
         if with_openblas then "openblas"
         else if with_cublas then "cublas"
         else if with_clblas then "clblas"
