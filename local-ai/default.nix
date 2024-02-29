@@ -28,6 +28,11 @@
 , with_cublas ? false
 , cudaPackages
 
+, with_clblas ? false
+, clblast
+, ocl-icd
+, opencl-headers
+
   # TODO: provide the right version of ncnn
 , with_stablediffusion ? false
 , opencv
@@ -57,6 +62,7 @@ let
     fetchSubmodules = true;
   };
 
+  # possible improvement: use Nix package llama-cpp
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
@@ -137,7 +143,7 @@ let
     ++ lib.optional with_tts "tts"
     ++ lib.optional with_stablediffusion "stablediffusion";
 in
-(buildGoModule.override { stdenv = gcc13Stdenv; }) rec {
+buildGoModule rec {
   pname = "local-ai";
   version = "2.9.0";
 
@@ -192,8 +198,10 @@ in
   buildPhase =
     let
       buildType =
-        if with_openblas then assert !with_cublas; "openblas"
+        assert (lib.count lib.id [ with_openblas with_openblas with_clblas ]) <= 1;
+        if with_openblas then "openblas"
         else if with_cublas then "cublas"
+        else if with_clblas then "clblas"
         else "";
     in
     ''
@@ -215,10 +223,16 @@ in
     grpc
     openssl
   ]
-  ++ lib.optionals with_stablediffusion [ opencv ncnn ]
-  ++ lib.optionals with_tts [ sonic spdlog fmt onnxruntime ]
-  ++ lib.optional with_cublas cudaPackages.cudatoolkit
-  ++ lib.optional with_openblas openblas.dev
+  ++ lib.optionals with_stablediffusion
+    [ opencv ncnn ]
+  ++ lib.optionals with_tts
+    [ sonic spdlog fmt onnxruntime ]
+  ++ lib.optionals with_cublas
+    [ cudaPackages.cudatoolkit ]
+  ++ lib.optionals with_openblas
+    [ openblas.dev ]
+  ++ lib.optionals with_clblas
+    [ clblast ocl-icd opencl-headers ]
   ;
 
   # patching rpath with patchelf doens't work. The execuable
@@ -245,7 +259,7 @@ in
   passthru.features = {
     inherit
       with_cublas with_openblas with_tts with_stablediffusion
-      with_tinydream;
+      with_tinydream with_clblas;
   };
 
   meta = with lib; {
