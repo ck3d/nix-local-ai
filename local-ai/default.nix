@@ -1,7 +1,4 @@
-{
-  # tinydream need to have at least gcc13
-  gcc13Stdenv
-, lib
+{ lib
 , fetchpatch
 , fetchFromGitHub
 , ncurses
