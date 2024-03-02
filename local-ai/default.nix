@@ -31,12 +31,10 @@
 , ocl-icd
 , opencl-headers
 
-  # TODO: provide the right version of ncnn
 , with_stablediffusion ? false
 , opencv
 , ncnn
 
-  # TODO: provide onnxruntime in the right way
 , with_tts ? false
 , onnxruntime
 , sonic
@@ -283,7 +281,12 @@ let
       license = licenses.mit;
       maintainers = with maintainers; [ onny ck3d ];
       platforms = platforms.linux;
-      broken = with_stablediffusion || with_tts;
+      broken =
+        # TODO: provide the right version of ncnn
+        with_stablediffusion
+        # TODO: provide onnxruntime in the right way
+        || with_tts
+        || (with_tinydream && (lib.lessThan self.stdenv.cc.version "13"));
     };
   };
 in
