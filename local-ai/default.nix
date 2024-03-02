@@ -144,7 +144,15 @@ let
     ++ lib.optional with_tts "tts"
     ++ lib.optional with_stablediffusion "stablediffusion";
 
-  self = buildGoModule rec {
+  buildEnv =
+    if with_cublas then
+    # It's necessary to consistently use backendStdenv when building with CUDA support,
+    # otherwise we get libstdc++ errors downstream.
+      buildGoModule.override { stdenv = cudaPackages.backendStdenv; }
+    else
+      buildGoModule;
+
+  self = buildEnv rec {
     pname = "local-ai";
     version = "2.9.0";
 
