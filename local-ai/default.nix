@@ -241,6 +241,8 @@ buildGoModule rec {
     wrapProgram $out/bin/${pname} \
   '' + lib.optionalString with_cublas ''
     --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib" \
+  '' + lib.optionalString with_clblas ''
+    --prefix LD_LIBRARY_PATH : "${clblast}/lib:${ocl-icd}/lib" \
   '' + lib.optionalString with_openblas ''
     --prefix LD_LIBRARY_PATH : "${openblas}/lib" \
   '' + ''
