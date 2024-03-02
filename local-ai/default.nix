@@ -15,6 +15,7 @@
 , buildGoModule
 , makeWrapper
 , runCommand
+, testers
 
   # apply feature parameter names according to
   # https://github.com/NixOS/rfcs/pull/169
@@ -142,134 +143,143 @@ let
   GO_TAGS = lib.optional with_tinydream "tinydream"
     ++ lib.optional with_tts "tts"
     ++ lib.optional with_stablediffusion "stablediffusion";
-in
-buildGoModule rec {
-  pname = "local-ai";
-  version = "2.9.0";
 
-  src = fetchFromGitHub {
-    owner = "go-skynet";
-    repo = "LocalAI";
-    rev = "v${version}";
-    hash = "sha256-vy6oyWeM0UJbtl/CmQQuNzmbTJyeKjsbyKR3P5Kb2+k=";
-  };
+  self = buildGoModule rec {
+    pname = "local-ai";
+    version = "2.9.0";
 
-  vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
+    src = fetchFromGitHub {
+      owner = "go-skynet";
+      repo = "LocalAI";
+      rev = "v${version}";
+      hash = "sha256-vy6oyWeM0UJbtl/CmQQuNzmbTJyeKjsbyKR3P5Kb2+k=";
+    };
 
-  # Workaround for
-  # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
-  # when building jtreg
-  env.NIX_CFLAGS_COMPILE = "-Wformat"
-    + lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
+    vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
 
-  postPatch =
-    let
-      cp = "cp -r --no-preserve=mode,ownership";
-    in
-    ''
-      sed -i Makefile \
-        -e 's;git clone.*go-llama$;${cp} ${go-llama} sources/go-llama;' \
-        -e 's;git clone.*go-llama-ggml$;${cp} ${go-llama-ggml} sources/go-llama-ggml;' \
-        -e 's;git clone.*gpt4all$;${cp} ${gpt4all} sources/gpt4all;' \
-        -e 's;git clone.*go-piper$;${cp} ${go-piper} sources/go-piper;' \
-        -e 's;git clone.*go-rwkv$;${cp} ${go-rwkv} sources/go-rwkv;' \
-        -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
-        -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
-        -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
-        -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream'} sources/go-tiny-dream;' \
-        -e 's, && git checkout.*,,g' \
-        -e '/mod download/ d' \
+    # Workaround for
+    # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
+    # when building jtreg
+    env.NIX_CFLAGS_COMPILE = "-Wformat"
+      + lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
 
-      sed -i backend/cpp/llama/Makefile \
-        -e 's;git clone.*llama\.cpp$;${cp} ${llama_cpp'} llama\.cpp;' \
-        -e 's, && git checkout.*,,g' \
+    postPatch =
+      let
+        cp = "cp -r --no-preserve=mode,ownership";
+      in
+      ''
+        sed -i Makefile \
+          -e 's;git clone.*go-llama$;${cp} ${go-llama} sources/go-llama;' \
+          -e 's;git clone.*go-llama-ggml$;${cp} ${go-llama-ggml} sources/go-llama-ggml;' \
+          -e 's;git clone.*gpt4all$;${cp} ${gpt4all} sources/gpt4all;' \
+          -e 's;git clone.*go-piper$;${cp} ${go-piper} sources/go-piper;' \
+          -e 's;git clone.*go-rwkv$;${cp} ${go-rwkv} sources/go-rwkv;' \
+          -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
+          -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
+          -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
+          -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream'} sources/go-tiny-dream;' \
+          -e 's, && git checkout.*,,g' \
+          -e '/mod download/ d' \
 
-    ''
-  ;
+        sed -i backend/cpp/llama/Makefile \
+          -e 's;git clone.*llama\.cpp$;${cp} ${llama_cpp'} llama\.cpp;' \
+          -e 's, && git checkout.*,,g' \
 
-  modBuildPhase = ''
-    mkdir sources
-    make prepare-sources
-    go mod tidy -v
-  '';
+      ''
+    ;
 
-  proxyVendor = true;
-
-  buildPhase =
-    let
-      buildType =
-        assert (lib.count lib.id [ with_openblas with_cublas with_clblas ]) <= 1;
-        if with_openblas then "openblas"
-        else if with_cublas then "cublas"
-        else if with_clblas then "clblas"
-        else "";
-    in
-    ''
+    modBuildPhase = ''
       mkdir sources
-      make \
-        VERSION=v${version} \
-        BUILD_TYPE=${buildType} \
-        GO_TAGS="${builtins.concatStringsSep " " GO_TAGS}" \
-        build
+      make prepare-sources
+      go mod tidy -v
     '';
 
-  installPhase = ''
-    install -Dt $out/bin ${pname}
-  '';
+    proxyVendor = true;
 
-  buildInputs = [
-    abseil-cpp
-    protobuf
-    grpc
-    openssl
-  ]
-  ++ lib.optionals with_stablediffusion
-    [ opencv ncnn ]
-  ++ lib.optionals with_tts
-    [ sonic spdlog fmt onnxruntime ]
-  ++ lib.optionals with_cublas
-    [ cudaPackages.cudatoolkit ]
-  ++ lib.optionals with_openblas
-    [ openblas.dev ]
-  ++ lib.optionals with_clblas
-    [ clblast ocl-icd opencl-headers ]
-  ;
+    buildPhase =
+      let
+        buildType =
+          assert (lib.count lib.id [ with_openblas with_cublas with_clblas ]) <= 1;
+          if with_openblas then "openblas"
+          else if with_cublas then "cublas"
+          else if with_clblas then "clblas"
+          else "";
+      in
+      ''
+        mkdir sources
+        make \
+          VERSION=v${version} \
+          BUILD_TYPE=${buildType} \
+          GO_TAGS="${builtins.concatStringsSep " " GO_TAGS}" \
+          build
+      '';
 
-  # patching rpath with patchelf doens't work. The execuable
-  # raises an segmentation fault
-  postFixup = ''
-    wrapProgram $out/bin/${pname} \
-  '' + lib.optionalString with_cublas ''
-    --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib" \
-  '' + lib.optionalString with_clblas ''
-    --prefix LD_LIBRARY_PATH : "${clblast}/lib:${ocl-icd}/lib" \
-  '' + lib.optionalString with_openblas ''
-    --prefix LD_LIBRARY_PATH : "${openblas}/lib" \
-  '' + ''
-    --prefix PATH : "${ffmpeg}/bin"
-  '';
+    installPhase = ''
+      install -Dt $out/bin ${pname}
+    '';
 
-  nativeBuildInputs = [
-    ncurses
-    cmake
-    makeWrapper
-  ]
-  ++ lib.optional with_openblas pkg-config
-  ++ lib.optional with_cublas cudaPackages.cuda_nvcc
-  ;
+    buildInputs = [
+      abseil-cpp
+      protobuf
+      grpc
+      openssl
+    ]
+    ++ lib.optionals with_stablediffusion
+      [ opencv ncnn ]
+    ++ lib.optionals with_tts
+      [ sonic spdlog fmt onnxruntime ]
+    ++ lib.optionals with_cublas
+      [ cudaPackages.cudatoolkit ]
+    ++ lib.optionals with_openblas
+      [ openblas.dev ]
+    ++ lib.optionals with_clblas
+      [ clblast ocl-icd opencl-headers ]
+    ;
 
-  passthru.features = {
-    inherit
-      with_cublas with_openblas with_tts with_stablediffusion
-      with_tinydream with_clblas;
+    # patching rpath with patchelf doens't work. The execuable
+    # raises an segmentation fault
+    postFixup = ''
+      wrapProgram $out/bin/${pname} \
+    '' + lib.optionalString with_cublas ''
+      --prefix LD_LIBRARY_PATH : "${cudaPackages.libcublas}/lib:${cudaPackages.cuda_cudart}/lib:/run/opengl-driver/lib" \
+    '' + lib.optionalString with_clblas ''
+      --prefix LD_LIBRARY_PATH : "${clblast}/lib:${ocl-icd}/lib" \
+    '' + lib.optionalString with_openblas ''
+      --prefix LD_LIBRARY_PATH : "${openblas}/lib" \
+    '' + ''
+      --prefix PATH : "${ffmpeg}/bin"
+    '';
+
+    nativeBuildInputs = [
+      ncurses
+      cmake
+      makeWrapper
+    ]
+    ++ lib.optional with_openblas pkg-config
+    ++ lib.optional with_cublas cudaPackages.cuda_nvcc
+    ;
+
+    passthru.features = {
+      inherit
+        with_cublas with_openblas with_tts with_stablediffusion
+        with_tinydream with_clblas;
+    };
+
+    passthru.tests = {
+      version = testers.testVersion {
+        package = self;
+        version = "v" + version;
+      };
+    };
+
+    meta = with lib; {
+      description = "OpenAI alternative to run local LLMs, image and audio generation";
+      homepage = "https://localai.io";
+      license = licenses.mit;
+      maintainers = with maintainers; [ onny ck3d ];
+      platforms = platforms.linux;
+      broken = with_stablediffusion || with_tts;
+    };
   };
-
-  meta = with lib; {
-    description = "OpenAI alternative to run local LLMs, image and audio generation";
-    homepage = "https://localai.io";
-    license = licenses.mit;
-    maintainers = with maintainers; [ onny ck3d ];
-    platforms = platforms.linux;
-    broken = with_stablediffusion || with_tts;
-  };
-}
+in
+self
