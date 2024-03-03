@@ -273,6 +273,23 @@ let
         package = self;
         version = "v" + version;
       };
+      health =
+        let
+          port = "8080";
+        in
+        testers.runNixOSTest {
+          name = pname + "-health";
+          nodes.machine = {
+            systemd.services.local-ai = {
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig.ExecStart = "${self}/bin/local-ai --address :${port}";
+            };
+          };
+          testScript = ''
+            machine.wait_for_open_port(${port})
+            machine.succeed("curl -f http://localhost:${port}/readyz")
+          '';
+        };
     };
 
     meta = with lib; {
