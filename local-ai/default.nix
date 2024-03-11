@@ -32,7 +32,6 @@
 
 , with_stablediffusion ? false
 , opencv
-, ncnn
 
 , with_tts ? false
 , onnxruntime
@@ -226,7 +225,7 @@ let
       openssl
     ]
     ++ lib.optionals with_stablediffusion
-      [ opencv ncnn ]
+      [ opencv ]
     ++ lib.optionals with_tts
       [ sonic spdlog fmt onnxruntime ]
     ++ lib.optionals with_cublas
@@ -297,7 +296,7 @@ let
       maintainers = with maintainers; [ onny ck3d ];
       platforms = platforms.linux;
       broken =
-        # TODO: provide the right version of ncnn
+        # TODO: fix compilation of provided ncnn sources
         with_stablediffusion
         # TODO: provide onnxruntime in the right way
         || with_tts
