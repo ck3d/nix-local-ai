@@ -2,7 +2,6 @@
 , fetchpatch
 , fetchFromGitHub
 , ncurses
-, abseil-cpp
 , protobuf
 , grpc
 , openssl
@@ -222,8 +221,7 @@ let
     '';
 
     buildInputs = [
-      abseil-cpp
-      protobuf
+      protobuf # provides also abseil_cpp as propagated build input
       grpc
       openssl
     ]
