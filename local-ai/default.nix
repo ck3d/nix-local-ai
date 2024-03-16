@@ -1,4 +1,5 @@
-{ lib
+{ stdenv
+, lib
 , fetchpatch
 , fetchFromGitHub
 , ncurses
@@ -111,12 +112,24 @@ let
     fetchSubmodules = true;
   };
 
-  go-stable-diffusion = fetchFromGitHub {
-    owner = "mudler";
-    repo = "go-stable-diffusion";
-    rev = "d5d2be8e7e395c2d73ceef61e6fe8d240f2cd831";
-    hash = "sha256-MbVYeWQF/aJNsg2NpTMVx5tD31BK5pQ8Zg92uoWRkcU=";
-    fetchSubmodules = true;
+  go-stable-diffusion = stdenv.mkDerivation {
+    pname = "go_stable_diffusion";
+    version = "unstable";
+    src = fetchFromGitHub {
+      owner = "mudler";
+      repo = "go-stable-diffusion";
+      rev = "d5d2be8e7e395c2d73ceef61e6fe8d240f2cd831";
+      hash = "sha256-MbVYeWQF/aJNsg2NpTMVx5tD31BK5pQ8Zg92uoWRkcU=";
+      fetchSubmodules = true;
+    };
+    buildFlags = [ "libstablediffusion.a" ];
+    dontUseCmakeConfigure = true;
+    nativeBuildInputs = [ cmake ];
+    buildInputs = [ opencv ];
+    env.NIX_CFLAGS_COMPILE = " -isystem ${opencv}/include/opencv4";
+    installPhase = ''
+      install -Dt $out libstablediffusion.a Makefile go.mod *.go stablediffusion.h
+    '';
   };
 
   go-tiny-dream = fetchFromGitHub {
@@ -161,8 +174,7 @@ let
     # Workaround for
     # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
     # when building jtreg
-    env.NIX_CFLAGS_COMPILE = "-Wformat"
-      + lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
+    env.NIX_CFLAGS_COMPILE = "-Wformat";
 
     postPatch =
       let
@@ -177,7 +189,7 @@ let
           -e 's;git clone.*go-rwkv$;${cp} ${go-rwkv} sources/go-rwkv;' \
           -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
           -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
-          -e 's;git clone.*diffusion$;${cp} ${go-stable-diffusion} sources/go-stable-diffusion;' \
+          -e 's;git clone.*diffusion$;${if with_stablediffusion then cp + " " + go-stable-diffusion else "mkdir"} sources/go-stable-diffusion;' \
           -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream'} sources/go-tiny-dream;' \
           -e 's, && git checkout.*,,g' \
           -e '/mod download/ d' \
@@ -296,10 +308,8 @@ let
       maintainers = with maintainers; [ onny ck3d ];
       platforms = platforms.linux;
       broken =
-        # TODO: fix compilation of provided ncnn sources
-        with_stablediffusion
         # TODO: provide onnxruntime in the right way
-        || with_tts
+        with_tts
         || (with_tinydream && (lib.lessThan self.stdenv.cc.version "13"));
     };
   };
