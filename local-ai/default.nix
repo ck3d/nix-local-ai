@@ -44,8 +44,8 @@ let
   go-llama = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "aeba71ee842819da681ea537e78846dc75949ac0";
-    hash = "sha256-ELoaJg7wOHloQws+do6TZUo7zOxUP0E85v80BlpUOJA=";
+    rev = "6a8041ef6b46d4712afc3ae791d1c2d73da0ad1c";
+    hash = "sha256-IcgyWLnzvNQ0QRCJXhME8j/95PuyGlDjF6cxT2k5gIE=";
     fetchSubmodules = true;
   };
 
@@ -61,8 +61,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "fd43d66f46ee3b5345fb8a74a252d86ccd34a409";
-    hash = "sha256-kvPCEqhxgsGTP3VYM5FvJ5bS+xAb4HD/aEeiu+m/3Dk=";
+    rev = "d84c48505f60bcd358b82a751d40418c4d235643";
+    hash = "sha256-BZHB7GVsiG0GraQIabBmoypDU4Y18PD+NNbhWIRJpgI=";
     fetchSubmodules = true;
   };
 
@@ -83,16 +83,16 @@ let
   go-piper = fetchFromGitHub {
     owner = "mudler";
     repo = "go-piper";
-    rev = "d6b6275ba037dabdba4a8b65dfdf6b2a73a67f07";
-    hash = "sha256-p589giBsEPsoR+RQU7qfGfpfqpTdBI51lvnLs4DmE0Y=";
+    rev = "9d0100873a7dbb0824dfea40e8cec70a1b110759";
+    hash = "sha256-Yv9LQkWwGpYdOS0FvtP0vZ0tRyBAx27sdmziBR4U4n8=";
     fetchSubmodules = true;
   };
 
   go-rwkv = fetchFromGitHub {
     owner = "donomii";
     repo = "go-rwkv.cpp";
-    rev = "633c5a3485c403cb2520693dc0991a25dace9f0f";
-    hash = "sha256-BECmBLbtAh5pdZZz0NBLbt+BX2TaC2NjHYwSEEAFPlI=";
+    rev = "661e7ae26d442f5cfebd2a0881b44e8c55949ec6";
+    hash = "sha256-byTNZQSnt7qpBMng3ANJmpISh3GJiz+F15UqfXaz6nQ=";
     fetchSubmodules = true;
   };
 
@@ -118,8 +118,8 @@ let
     src = fetchFromGitHub {
       owner = "mudler";
       repo = "go-stable-diffusion";
-      rev = "d5d2be8e7e395c2d73ceef61e6fe8d240f2cd831";
-      hash = "sha256-MbVYeWQF/aJNsg2NpTMVx5tD31BK5pQ8Zg92uoWRkcU=";
+      rev = "362df9da29f882dbf09ade61972d16a1f53c3485";
+      hash = "sha256-A5KvMZOviPsIpPHxM8cacT+qE2x1iFJAbPsRs4sLijY=";
       fetchSubmodules = true;
     };
     buildFlags = [ "libstablediffusion.a" ];
@@ -160,16 +160,16 @@ let
 
   self = buildEnv rec {
     pname = "local-ai";
-    version = "2.9.0";
+    version = "2.10.0";
 
     src = fetchFromGitHub {
       owner = "go-skynet";
       repo = "LocalAI";
       rev = "v${version}";
-      hash = "sha256-vy6oyWeM0UJbtl/CmQQuNzmbTJyeKjsbyKR3P5Kb2+k=";
+      hash = "sha256-b+nuDzuxZQDZjL/GwbuUQHLxVTC8S98hnUeHOhFX4cY=";
     };
 
-    vendorHash = "sha256-WUgDyRzShftJ15yumlvcSN0rUx8ytQPQGAO37AxMHeA=";
+    vendorHash = "sha256-UCeG0TKS+VBW8D87VmxTHS2tCAf0ADEYTJayaSiua6s=";
 
     # Workaround for
     # `cc1plus: error: '-Wformat-security' ignored without '-Wformat' [-Werror=format-security]`
