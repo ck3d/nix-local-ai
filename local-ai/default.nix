@@ -291,7 +291,7 @@ let
           nodes.machine = {
             systemd.services.local-ai = {
               wantedBy = [ "multi-user.target" ];
-              serviceConfig.ExecStart = "${self}/bin/local-ai --address :${port}";
+              serviceConfig.ExecStart = "${self}/bin/local-ai --localai-config-dir . --address :${port}";
             };
           };
           testScript = ''
