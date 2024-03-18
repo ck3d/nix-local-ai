@@ -189,7 +189,7 @@ let
           -e 's;git clone.*go-rwkv$;${cp} ${go-rwkv} sources/go-rwkv;' \
           -e 's;git clone.*whisper\.cpp$;${cp} ${whisper} sources/whisper\.cpp;' \
           -e 's;git clone.*go-bert$;${cp} ${go-bert} sources/go-bert;' \
-          -e 's;git clone.*diffusion$;${if with_stablediffusion then cp + " " + go-stable-diffusion else "mkdir"} sources/go-stable-diffusion;' \
+          -e 's;git clone.*diffusion$;${cp} ${if with_stablediffusion then go-stable-diffusion else go-stable-diffusion.src} sources/go-stable-diffusion;' \
           -e 's;git clone.*go-tiny-dream$;${cp} ${go-tiny-dream'} sources/go-tiny-dream;' \
           -e 's, && git checkout.*,,g' \
           -e '/mod download/ d' \
