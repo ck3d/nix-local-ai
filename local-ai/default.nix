@@ -41,19 +41,11 @@
 , fmt
 }:
 let
-  go-llama = fetchFromGitHub {
-    owner = "go-skynet";
-    repo = "go-llama.cpp";
-    rev = "6a8041ef6b46d4712afc3ae791d1c2d73da0ad1c";
-    hash = "sha256-IcgyWLnzvNQ0QRCJXhME8j/95PuyGlDjF6cxT2k5gIE=";
-    fetchSubmodules = true;
-  };
-
   go-llama-ggml = fetchFromGitHub {
     owner = "go-skynet";
     repo = "go-llama.cpp";
-    rev = "50cee7712066d9e38306eccadcfbb44ea87df4b7";
-    hash = "sha256-5qwUSg56fyHk5x8NgwLrgl+9Ibl2GTBP1Aq5sAvTs+s=";
+    rev = "2b57a8ae43e4699d3dc5d1496a1ccd42922993be";
+    hash = "sha256-D6SEg5pPcswGyKAmF4QTJP6/Y1vjRr7m7REguag+too=";
     fetchSubmodules = true;
   };
 
@@ -61,8 +53,8 @@ let
   llama_cpp = fetchFromGitHub {
     owner = "ggerganov";
     repo = "llama.cpp";
-    rev = "d84c48505f60bcd358b82a751d40418c4d235643";
-    hash = "sha256-BZHB7GVsiG0GraQIabBmoypDU4Y18PD+NNbhWIRJpgI=";
+    rev = "d01b3c4c32357567f3531d4e6ceffc5d23e87583";
+    hash = "sha256-7eaQV+XTCXdrJlo7y21q5j/8ecVwuTMJScRTATcF6oM=";
     fetchSubmodules = true;
   };
 
@@ -99,8 +91,8 @@ let
   whisper = fetchFromGitHub {
     owner = "ggerganov";
     repo = "whisper.cpp";
-    rev = "9286d3f584240ba58bd44a1bd1e85141579c78d4";
-    hash = "sha256-hLPtfJVYiopnSdDqu9n/k9Avb4ibgbjmrVr81BTWW/w=";
+    rev = "a56f435fd475afd7edf02bfbf9f8c77f527198c2";
+    hash = "sha256-ozTnxEuftAQQr5v/kwg5EKHuKF21d9ETIyvXcvr0Qos=";
     fetchSubmodules = true;
   };
 
@@ -160,13 +152,13 @@ let
 
   self = buildEnv rec {
     pname = "local-ai";
-    version = "2.10.0";
+    version = "2.10.1";
 
     src = fetchFromGitHub {
       owner = "go-skynet";
       repo = "LocalAI";
       rev = "v${version}";
-      hash = "sha256-b+nuDzuxZQDZjL/GwbuUQHLxVTC8S98hnUeHOhFX4cY=";
+      hash = "sha256-135s1Gw8mfOIx4kXlw2pYrD3ewwajUtnz3sPY/CtoLw=";
     };
 
     vendorHash = "sha256-UCeG0TKS+VBW8D87VmxTHS2tCAf0ADEYTJayaSiua6s=";
@@ -182,7 +174,6 @@ let
       in
       ''
         sed -i Makefile \
-          -e 's;git clone.*go-llama$;${cp} ${go-llama} sources/go-llama;' \
           -e 's;git clone.*go-llama-ggml$;${cp} ${go-llama-ggml} sources/go-llama-ggml;' \
           -e 's;git clone.*gpt4all$;${cp} ${gpt4all} sources/gpt4all;' \
           -e 's;git clone.*go-piper$;${cp} ${go-piper} sources/go-piper;' \
@@ -217,14 +208,17 @@ let
           else if with_cublas then "cublas"
           else if with_clblas then "clblas"
           else "";
+
+        buildFlags = [
+          "VERSION=v${version}"
+          "BUILD_TYPE=${buildType}"
+          "GO_TAGS=\"${builtins.concatStringsSep " " GO_TAGS}\""
+        ]
+        ++ lib.optional with_cublas "CUDA_LIBPATH=${cudaPackages.cuda_cudart}/lib";
       in
       ''
         mkdir sources
-        make \
-          VERSION=v${version} \
-          BUILD_TYPE=${buildType} \
-          GO_TAGS="${builtins.concatStringsSep " " GO_TAGS}" \
-          build
+        make ${builtins.concatStringsSep " " buildFlags} build
       '';
 
     installPhase = ''
@@ -241,7 +235,7 @@ let
     ++ lib.optionals with_tts
       [ sonic spdlog fmt onnxruntime ]
     ++ lib.optionals with_cublas
-      [ cudaPackages.cudatoolkit ]
+      [ cudaPackages.cudatoolkit cudaPackages.cuda_cudart ]
     ++ lib.optionals with_openblas
       [ openblas.dev ]
     ++ lib.optionals with_clblas
