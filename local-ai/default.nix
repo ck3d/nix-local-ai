@@ -47,6 +47,8 @@
 , sonic
 , spdlog
 , fmt
+, espeak-ng
+, piper-tts
 }:
 let
   BUILD_TYPE =
@@ -148,6 +150,55 @@ let
     '';
   };
 
+  espeak-ng' = espeak-ng.overrideAttrs (self: {
+    name = "espeak-ng'";
+    inherit (go-piper) src;
+    sourceRoot = "source/espeak";
+    patches = [ ];
+    nativeBuildInputs = [ cmake ];
+    cmakeFlags = (self.cmakeFlags or [ ]) ++ [
+      # -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
+      (lib.cmakeBool "BUILD_SHARED_LIBS" true)
+      (lib.cmakeBool "USE_ASYNC" false)
+      (lib.cmakeBool "USE_MBROLA" false)
+      (lib.cmakeBool "USE_LIBPCAUDIO" false)
+      (lib.cmakeBool "USE_KLATT" false)
+      (lib.cmakeBool "USE_SPEECHPLAYER" false)
+      (lib.cmakeBool "USE_LIBSONIC" false)
+      (lib.cmakeBool "CMAKE_POSITION_INDEPENDENT_CODE" true)
+    ];
+    preConfigure = null;
+    postInstall = null;
+  });
+
+  piper-phonemize = stdenv.mkDerivation {
+    name = "piper-phonemize";
+    inherit (go-piper) src;
+    sourceRoot = "source/piper-phonemize";
+    buildInputs = [ espeak-ng' onnxruntime ];
+    nativeBuildInputs = [ cmake pkg-config ];
+    cmakeFlags = [
+      (lib.cmakeFeature "ONNXRUNTIME_DIR" "${onnxruntime.dev}")
+      (lib.cmakeFeature "ESPEAK_NG_DIR" "${espeak-ng'}")
+    ];
+    passthru.espeak-ng = espeak-ng';
+  };
+
+  piper-tts' = (piper-tts.override { inherit piper-phonemize; }).overrideAttrs (self: {
+    name = "piper-tts'";
+    inherit (go-piper) src;
+    sourceRoot = "source/piper";
+    installPhase = null;
+    postInstall = ''
+      cp CMakeFiles/piper.dir/src/cpp/piper.cpp.o $out/piper.o
+      cd $out
+      mkdir bin lib
+      mv lib*so* lib/
+      mv piper piper_phonemize bin/
+      rm -rf cmake pkgconfig espeak-ng-data *.ort
+    '';
+  });
+
   go-piper = stdenv.mkDerivation {
     name = "go-piper";
     src = fetchFromGitHub {
@@ -157,16 +208,11 @@ let
       hash = "sha256-Yv9LQkWwGpYdOS0FvtP0vZ0tRyBAx27sdmziBR4U4n8=";
       fetchSubmodules = true;
     };
-    patchPhase = ''
-      sed -i Makefile \
-        -e '/cd piper-phonemize/ s;cmake;cmake -DONNXRUNTIME_DIR=${onnxruntime.dev};' \
-        -e '/CXXFLAGS *= / s;$; -DSPDLOG_FMT_EXTERNAL=1;' \
-        -e '/cd piper\/build / s;cmake;cmake -DSPDLOG_DIR=${spdlog.src} -DFMT_DIR=${fmt};'
+    postUnpack = ''
+      cp -r --no-preserve=mode ${piper-tts'}/* source
     '';
     buildFlags = [ "libpiper_binding.a" ];
-    dontUseCmakeConfigure = true;
-    nativeBuildInputs = [ cmake ];
-    buildInputs = [ sonic spdlog onnxruntime ];
+    buildInputs = [ piper-tts' espeak-ng' sonic spdlog onnxruntime ];
     installPhase = ''
       cp -r --no-preserve=mode $src $out
       tar cf - *.a \
@@ -425,7 +471,8 @@ let
     passthru.local-packages = {
       inherit
         go-tiny-dream go-rwkv go-bert go-llama-ggml gpt4all go-piper
-        llama-cpp-grpc whisper-cpp go-tiny-dream-ncnn;
+        llama-cpp-grpc whisper-cpp go-tiny-dream-ncnn espeak-ng' piper-phonemize
+        piper-tts';
     };
 
     passthru.features = {
