@@ -66,7 +66,7 @@
                   with_tts = true;
                   # tinydream can not compiled with cublas gcc
                   with_tinydream = type != "cublas";
-                }).passthru.tests.health;
+                }).passthru.tests.tts;
               })
               [ "cublas" "clblas" "openblas" ])
         );
