@@ -10,11 +10,11 @@ buildNpmPackage rec {
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
-    rev = "${version}";
-    hash = "";
+    rev = "v${version}";
+    hash = "sha256-AmWLWzxt8+Nz7ahYTtMwtjxVzqTYZeMfKTF1IOi0lsA=";
   };
 
-  npmDepsHash = "";
+  npmDepsHash = "sha256-VW89XnzputCWw5dOAKg09kve7IMNlxGS6ShYEo1ZC7s=";
 
   postInstall = ''
     mkdir -p $out/lib
