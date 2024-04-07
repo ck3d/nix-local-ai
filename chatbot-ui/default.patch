@@ -1,0 +1,45 @@
+diff --git a/app/[locale]/layout.tsx b/app/[locale]/layout.tsx
+index 474058a..35dc4f7 100644
+--- a/app/[locale]/layout.tsx
++++ b/app/[locale]/layout.tsx
+@@ -6,12 +6,12 @@ import initTranslations from "@/lib/i18n"
+ import { Database } from "@/supabase/types"
+ import { createServerClient } from "@supabase/ssr"
+ import { Metadata, Viewport } from "next"
+-import { Inter } from "next/font/google"
++import localFont from "next/font/local"
+ import { cookies } from "next/headers"
+ import { ReactNode } from "react"
+ import "./globals.css"
+ 
+-const inter = Inter({ subsets: ["latin"] })
++const inter = localFont({ src: "../../Inter-Regular.otf" })
+ const APP_NAME = "Chatbot UI"
+ const APP_DEFAULT_TITLE = "Chatbot UI"
+ const APP_TITLE_TEMPLATE = "%s - Chatbot UI"
+diff --git a/next.config.js b/next.config.js
+index 201356a..987bb18 100644
+--- a/next.config.js
++++ b/next.config.js
+@@ -1,14 +1,11 @@
+-const withBundleAnalyzer = require("@next/bundle-analyzer")({
+-  enabled: process.env.ANALYZE === "true"
+-})
+-
+ const withPWA = require("next-pwa")({
+   dest: "public"
+ })
+ 
+-module.exports = withBundleAnalyzer(
++module.exports =
+   withPWA({
+     reactStrictMode: true,
++    output: "standalone",
+     images: {
+       remotePatterns: [
+         {
+@@ -29,4 +26,3 @@ module.exports = withBundleAnalyzer(
+       serverComponentsExternalPackages: ["sharp", "onnxruntime-node"]
+     }
+   })
+-)

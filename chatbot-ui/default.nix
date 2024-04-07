@@ -1,9 +1,10 @@
-{ mkYarnPackage
-, buildNpmPackage
+{ buildNpmPackage
+, nodejs
 , fetchFromGitHub
-, lib
 , makeWrapper
 , fetchzip
+, vips
+, pkg-config
 }:
 let
   inter = fetchzip {
@@ -14,35 +15,44 @@ let
 in
 buildNpmPackage rec {
   pname = "chatbot-ui";
-  version = "20230820";
+  version = "20240402";
 
   src = fetchFromGitHub {
     owner = "mckaywrigley";
     repo = pname;
-    rev = "138950c5520e80f69f059ecf0aea6a91a727cff9";
-    hash = "sha256-P0n9PXaJOFW4PH8crcQkfSR+dlYlt/5rEghddFPssxg=";
+    rev = "b865b0555f53957e96727bc0bbb369c9eaecd83b";
+    hash = "sha256-9xg9Q+0rwxakaDqf5pIw9EDte4pdLUnaRaXtScpLWFI=";
   };
 
   patches = [
-    ./font.patch
+    ./default.patch
   ];
 
-  npmDepsHash = "sha256-7mReAoIQcIk+n6UDYtLLlTyuT2F11jY9rvwJiykouVw=";
+  npmDepsHash = "sha256-708oOP26UOZ0MfclDg5doke8O1OnwbP4m62WXpty8Mc=";
 
   nativeBuildInputs = [
     makeWrapper
+    pkg-config
+  ];
+
+  buildInputs = [
+    vips
   ];
 
   postConfigure = ''
-    cp "${inter}/Inter Desktop/Inter-Regular.otf" pages
+    cp "${inter}/Inter Desktop/Inter-Regular.otf" .
   '';
 
+  # inspired by
+  # https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
   postInstall = ''
-    rm -r .next/cache
     rm -r $out/lib
-    mv -t $out \
-      .next public next.config.js next-i18next.config.js node_modules
-    makeWrapper $out/node_modules/.bin/next $out/${pname} \
-      --add-flags "start"
+    dest=$out/share/${pname}
+    mkdir -p $dest/.next $out/bin
+    cp -r -t $dest .next/standalone/. public
+    cp -r -t $dest/.next .next/static
+    makeWrapper ${nodejs}/bin/node $out/bin/${pname} \
+      --set NEXT_TELEMETRY_DISABLED 1 \
+      --add-flags "$dest/server.js"
   '';
 }
