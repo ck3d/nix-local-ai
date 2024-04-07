@@ -1,4 +1,5 @@
-{ stdenv
+{ config
+, stdenv
 , lib
 , fetchpatch
 , fetchFromGitHub
@@ -21,7 +22,7 @@
   # CPU extensions
 , enable_avx ? true
 , enable_avx2 ? true
-, enable_avx512 ? false
+, enable_avx512 ? stdenv.hostPlatform.avx512Support
 , enable_f16c ? true
 , enable_fma ? true
 
@@ -31,7 +32,7 @@
 , with_openblas ? false
 , openblas
 
-, with_cublas ? false
+, with_cublas ? config.cudaSupport
 , cudaPackages
 
 , with_clblas ? false
@@ -54,7 +55,6 @@
 , fetchzip
 , fetchurl
 , writeText
-, writeTextFile
 , symlinkJoin
 , linkFarmFromDrvs
 , jq
@@ -166,7 +166,6 @@ let
     patches = [ ];
     nativeBuildInputs = [ cmake ];
     cmakeFlags = (self.cmakeFlags or [ ]) ++ [
-      # -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
       (lib.cmakeBool "BUILD_SHARED_LIBS" true)
       (lib.cmakeBool "USE_ASYNC" false)
       (lib.cmakeBool "USE_MBROLA" false)
