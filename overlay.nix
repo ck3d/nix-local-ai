@@ -13,6 +13,7 @@ in
     local-ai-openblas = callPackage ./local-ai { with_openblas = true; };
     flowise = callPackage ./flowise { };
     chatbot-ui = callPackage ./chatbot-ui { };
+    chatbot-ui-legacy = callPackage ./chatbot-ui-legacy { };
     open-webui = callPackage ./open-webui { };
   };
 }
