@@ -1,7 +1,7 @@
 { config
 , stdenv
 , lib
-, addDriverRunpath
+, addDriverRunpath ? { driverLink = "/run/opengl-driver"; }
 , fetchpatch
 , fetchFromGitHub
 , protobuf
