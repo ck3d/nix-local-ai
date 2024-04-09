@@ -112,8 +112,8 @@ let
     src = fetchFromGitHub {
       owner = "ggerganov";
       repo = "llama.cpp";
-      rev = "b06c16ef9f81d84da520232c125d4d8a1d273736";
-      hash = "sha256-t1AIx/Ir5RhasjblH4BSpGOXVvO84SJPSqa7rXWj6b4=";
+      rev = "cc4a95426d17417d3c83f12bdb514fbe8abe2a88";
+      hash = "sha256-lR5MREfrxKI0vYUDtprllw7YN+O+iWzxAvgrWgB0tg4=";
       fetchSubmodules = true;
     };
     postPatch = prev.postPatch + ''
@@ -266,8 +266,8 @@ let
     src = fetchFromGitHub {
       owner = "ggerganov";
       repo = "whisper.cpp";
-      rev = "1558ec5a16cb2b2a0bf54815df1d41f83dc3815b";
-      hash = "sha256-UAqWU3kvkHM+fV+T6gFVsAKuOG6N4FoFgTKGUptwjmE=";
+      rev = "13c22321d1ac758ce68a429c23104e234b440769";
+      hash = "sha256-ZLvLm8WO0wH2cJMSodF6LhDCXUG+E+Dc14pAYzaZ1P4=";
     };
     nativeBuildInputs = [ cmake pkg-config ];
     buildInputs = typedBuiltInputs;
@@ -347,14 +347,14 @@ let
     src = fetchFromGitHub {
       owner = "M0Rf30";
       repo = "go-tiny-dream";
-      rev = "772a9c0d9aaf768290e63cca3c904fe69faf677a";
-      hash = "sha256-r+wzFIjaI6cxAm/eXN3q8LRZZz+lE5EA4lCTk5+ZnIY=";
+      rev = "22a12a4bc0ac5455856f28f3b771331a551a4293";
+      hash = "sha256-DAVHD6E0OKHf4C2ldoI0Mm7813DIrmWFONUhSCQPCfc=";
       fetchSubmodules = true;
     };
     postUnpack = ''
       rm -rf source/ncnn
-      mkdir -p source/ncnn/build
-      cp -r --no-preserve=mode ${go-tiny-dream-ncnn} source/ncnn/build/install
+      mkdir -p source/ncnn/build/src
+      cp -r --no-preserve=mode ${go-tiny-dream-ncnn}/lib/. ${go-tiny-dream-ncnn}/include/. source/ncnn/build/src
     '';
     buildFlags = [ "libtinydream.a" ];
     installPhase = ''
@@ -378,18 +378,18 @@ let
       stdenv;
 
   pname = "local-ai";
-  version = "2.11.0";
+  version = "2.12.0";
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-Sqo4NOggUNb1ZemT9TRknBmz8dThe/X43R+4JFfQJ4M=";
+    hash = "sha256-a40NYEWp4XymltpnNfgEjoFHBUNmlZlhBKQubBUfQrI=";
   };
 
   self = buildGoModule.override { stdenv = effectiveStdenv; } {
     inherit pname version src;
 
-    vendorHash = "sha256-3bOr8DnAjTzOpVDB5wmlPxECNteWw3tI0yc1f2Wt4y0=";
+    vendorHash = "sha256-8Hu1y/PK21twnB7D22ltslFFzRrsB8d1R2hkgIFB/XY=";
 
     env.NIX_CFLAGS_COMPILE = lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
 
