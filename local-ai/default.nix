@@ -68,21 +68,7 @@ let
     else if with_clblas then "clblas"
     else "";
 
-  inherit (cudaPackages) libcublas cuda_nvcc cuda_cccl cuda_cudart;
-
-  typedBuiltInputs =
-    lib.optionals with_cublas
-      [
-        cuda_nvcc # should be part of nativeBuildInputs
-        cuda_cudart
-        cuda_cccl
-        (lib.getDev libcublas)
-        (lib.getLib libcublas)
-      ]
-    ++ lib.optionals with_clblas
-      [ clblast ocl-icd opencl-headers ]
-    ++ lib.optionals with_openblas
-      [ openblas.dev ];
+  inherit (cudaPackages) libcublas cuda_nvcc cuda_cccl cuda_cudart cudatoolkit;
 
   go-llama-ggml = effectiveStdenv.mkDerivation {
     name = "go-llama-ggml";
@@ -97,9 +83,18 @@ let
       "libbinding.a"
       "BUILD_TYPE=${BUILD_TYPE}"
     ];
-    buildInputs = typedBuiltInputs;
+
+    buildInputs = [ ]
+      ++ lib.optionals with_clblas [ clblast ocl-icd opencl-headers ]
+      ++ lib.optionals with_openblas [ openblas.dev ];
+
+    nativeBuildInputs = [ cmake ]
+      # backward compatiblity with nixos-23.11
+      # use cuda_nvcc after release of nixos-24.05
+      ++ lib.optionals with_cublas [ cudatoolkit ];
+
     dontUseCmakeConfigure = true;
-    nativeBuildInputs = [ cmake ];
+
     installPhase = ''
       mkdir $out
       tar cf - --exclude=build --exclude=CMakeFiles --exclude="*.o" . \
@@ -269,10 +264,17 @@ let
       rev = "8f253ef3af1c62c04316ba4afa7145fc4d701a8c";
       hash = "sha256-yHHjhpQIn99A/hqFwAb7TfTf4Q9KnKat93zyXS70bT8=";
     };
-    nativeBuildInputs = [ cmake pkg-config ];
-    buildInputs = typedBuiltInputs;
+
+    nativeBuildInputs = [ cmake pkg-config ]
+      ++ lib.optionals with_cublas [ cuda_nvcc ];
+
+    buildInputs = [ ]
+      ++ lib.optionals with_cublas [ cuda_cccl cuda_cudart libcublas ]
+      ++ lib.optionals with_clblas [ clblast ocl-icd opencl-headers ]
+      ++ lib.optionals with_openblas [ openblas.dev ];
+
     cmakeFlags = [
-      (lib.cmakeBool "WHISPER_CUBLAS" with_cublas)
+      (lib.cmakeBool "WHISPER_CUDA" with_cublas)
       (lib.cmakeBool "WHISPER_CLBLAST" with_clblas)
       (lib.cmakeBool "WHISPER_OPENBLAS" with_openblas)
       (lib.cmakeBool "WHISPER_NO_AVX" (!enable_avx))
@@ -415,11 +417,15 @@ let
       ''
     ;
 
-    buildInputs = typedBuiltInputs
-      ++ lib.optional with_stablediffusion go-stable-diffusion.buildInputs
-      ++ lib.optional with_tts go-piper.buildInputs;
+    buildInputs = [ ]
+      ++ lib.optionals with_cublas [ libcublas ]
+      ++ lib.optionals with_clblas [ clblast ocl-icd opencl-headers ]
+      ++ lib.optionals with_openblas [ openblas.dev ]
+      ++ lib.optionals with_stablediffusion go-stable-diffusion.buildInputs
+      ++ lib.optionals with_tts go-piper.buildInputs;
 
-    nativeBuildInputs = [ makeWrapper ];
+    nativeBuildInputs = [ makeWrapper ]
+      ++ lib.optionals with_cublas [ cuda_nvcc ];
 
     enableParallelBuilding = false;
 
