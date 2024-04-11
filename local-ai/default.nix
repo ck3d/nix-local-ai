@@ -1,4 +1,5 @@
 { config
+, callPackages
 , stdenv
 , lib
 , addDriverRunpath ? { driverLink = "/run/opengl-driver"; }
@@ -14,8 +15,6 @@
 , pkg-config
 , buildGoModule
 , makeWrapper
-, runCommand
-, testers
 
   # apply feature parameter names according to
   # https://github.com/NixOS/rfcs/pull/169
@@ -51,14 +50,6 @@
 , fmt
 , espeak-ng
 , piper-tts
-
-  # tests
-, fetchzip
-, fetchurl
-, writeText
-, symlinkJoin
-, linkFarmFromDrvs
-, jq
 }:
 let
   BUILD_TYPE =
@@ -506,84 +497,7 @@ let
         with_tinydream with_clblas;
     };
 
-    passthru.tests = {
-      version = testers.testVersion {
-        package = self;
-        version = "v" + version;
-      };
-      health =
-        let
-          port = "8080";
-        in
-        testers.runNixOSTest {
-          name = pname + "-health";
-          nodes.machine = {
-            systemd.services.local-ai = {
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig.ExecStart = "${self}/bin/local-ai --debug --localai-config-dir . --address :${port}";
-            };
-          };
-          testScript = ''
-            machine.wait_for_open_port(${port})
-            machine.succeed("curl -f http://localhost:${port}/readyz")
-          '';
-        };
-    }
-    // lib.optionalAttrs with_tts {
-      # https://localai.io/features/text-to-audio/#piper
-      tts =
-        let
-          port = "8080";
-          voice-en-us = fetchzip {
-            url = "https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-en-us-danny-low.tar.gz";
-            hash = "sha256-5wf+6H5HeQY0qgdqnAG1vSqtjIFM9lXH53OgouuPm0M=";
-            stripRoot = false;
-          };
-          ggml-tiny-en = fetchurl {
-            url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin";
-            hash = "sha256-x3xXZvHO8JtrfUfyG1Rsvd1BV4hrO11tT3CekeZsfCs=";
-          };
-          whisper-en = {
-            name = "whisper-en";
-            backend = "whisper";
-            parameters.model = ggml-tiny-en.name;
-          };
-          models = symlinkJoin {
-            name = "models";
-            paths = [
-              voice-en-us
-              (linkFarmFromDrvs "whisper-en" [
-                (writeText "whisper-en.yaml" (builtins.toJSON whisper-en))
-                ggml-tiny-en
-              ])
-            ];
-          };
-        in
-        testers.runNixOSTest {
-          name = pname + "-tts";
-          nodes.machine = {
-            systemd.services.local-ai = {
-              wantedBy = [ "multi-user.target" ];
-              serviceConfig.ExecStart = "${self}/bin/local-ai --debug --models-path ${models} --localai-config-dir . --address :${port}";
-            };
-          };
-          testScript =
-            let
-              request = {
-                model = "en-us-danny-low.onnx";
-                backend = "piper";
-                input = "Hello, how are you?";
-              };
-            in
-            ''
-              machine.wait_for_open_port(${port})
-              machine.succeed("curl -f http://localhost:${port}/readyz")
-              machine.succeed("curl -f http://localhost:${port}/tts --json @${writeText "request.json" (builtins.toJSON request)} --output out.wav")
-              machine.succeed("curl -f http://localhost:${port}/v1/audio/transcriptions --header 'Content-Type: multipart/form-data' --form file=@out.wav --form model=${whisper-en.name} --output transcription.json")
-              machine.succeed("${jq}/bin/jq --exit-status 'debug | .segments | first.text == \"${request.input}\"' transcription.json")
-            '';
-        };
-    };
+    passthru.tests = callPackages ./tests.nix { inherit self; };
 
     meta = with lib; {
       description = "OpenAI alternative to run local LLMs, image and audio generation";
