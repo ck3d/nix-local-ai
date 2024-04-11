@@ -95,6 +95,59 @@
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
         '';
     };
+  # https://localai.io/features/embeddings/#bert-embeddings
+  bert =
+    let
+      port = "8080";
+      # Note: q4_0 and q4_1 models can not be loaded
+      model-ggml = fetchurl {
+        url = "https://huggingface.co/skeskinen/ggml/resolve/main/all-MiniLM-L6-v2/ggml-model-f16.bin";
+        sha256 = "9c195b2453a4fef60a4f6be3a88a39211366214df6498a4fe4885c9e22314f50";
+      };
+      model-config = {
+        name = "embedding";
+        parameters.model = model-ggml.name;
+        backend = "bert-embeddings";
+        embeddings = true;
+      };
+      models = linkFarmFromDrvs "models" [
+        model-ggml
+        (writers.writeYAML "${model-config.name}.yaml" model-config)
+      ];
+    in
+    testers.runNixOSTest {
+      name = self.name + "-bert";
+      nodes.machine =
+        let
+          cores = 2;
+        in
+        {
+          virtualisation = {
+            inherit cores;
+            memorySize = 2048;
+          };
+          systemd.services.local-ai = {
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig.ExecStart = "${self}/bin/local-ai --debug --threads ${toString cores} --models-path ${models} --localai-config-dir . --address :${port}";
+          };
+        };
+      testScript =
+        let
+          request = {
+            model = model-config.name;
+            input = "Your text string goes here";
+          };
+        in
+        ''
+          machine.wait_for_open_port(${port})
+          machine.succeed("curl -f http://localhost:${port}/readyz")
+          machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
+          machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" request} --output embeddings.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"embedding\"' embeddings.json")
+        '';
+    };
+
 
 } // lib.optionalAttrs self.features.with_tts {
   # https://localai.io/features/text-to-audio/#piper
