@@ -62,8 +62,6 @@
                 name = "health-" + type;
                 value = (pkgs-unstable.nix-local-ai.local-ai.override {
                   "with_${type}" = true;
-                  with_stablediffusion = true;
-                  with_tts = true;
                   # tinydream can not compiled with cublas gcc
                   with_tinydream = type != "cublas";
                 }).passthru.tests.tts;

@@ -5,9 +5,6 @@ in
 {
   nix-local-ai = {
     local-ai = callPackage ./local-ai { };
-    local-ai-tts = callPackage ./local-ai { with_tts = true; };
-    local-ai-tinydream = callPackage ./local-ai { with_tinydream = true; };
-    local-ai-stablediffusion = callPackage ./local-ai { with_stablediffusion = true; };
     local-ai-cublas = callPackage ./local-ai { with_cublas = true; };
     local-ai-clblas = callPackage ./local-ai { with_clblas = true; };
     local-ai-openblas = callPackage ./local-ai { with_openblas = true; };

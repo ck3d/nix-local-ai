@@ -27,9 +27,6 @@
 , enable_f16c ? true
 , enable_fma ? true
 
-, with_tinydream ? false
-, ncnn
-
 , with_openblas ? false
 , openblas
 
@@ -41,10 +38,13 @@
 , ocl-icd
 , opencl-headers
 
-, with_stablediffusion ? false
+, with_tinydream ? false # do not compile with cublas
+, ncnn
+
+, with_stablediffusion ? true
 , opencv
 
-, with_tts ? false
+, with_tts ? true
 , onnxruntime
 , sonic
 , spdlog
@@ -342,7 +342,7 @@ let
     ];
   });
 
-  go-tiny-dream = stdenv.mkDerivation {
+  go-tiny-dream = effectiveStdenv.mkDerivation {
     name = "go-tiny-dream";
     src = fetchFromGitHub {
       owner = "M0Rf30";
