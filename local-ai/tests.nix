@@ -32,6 +32,70 @@
       '';
     };
 
+  # https://localai.io/docs/getting-started/manual/
+  llama =
+    let
+      port = "8080";
+      gguf = fetchurl {
+        url = "https://huggingface.co/TheBloke/Luna-AI-Llama2-Uncensored-GGUF/resolve/main/luna-ai-llama2-uncensored.Q4_K_M.gguf";
+        sha256 = "6a9dc401c84f0d48996eaa405174999c3a33bf12c2bfd8ea4a1e98f376de1f15";
+      };
+      models = linkFarmFromDrvs "models" [
+        gguf
+      ];
+    in
+    testers.runNixOSTest {
+      name = self.name + "-llama";
+      nodes.machine =
+        let
+          cores = 4;
+        in
+        {
+          virtualisation = {
+            inherit cores;
+            memorySize = 8192;
+          };
+          systemd.services.local-ai = {
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig.ExecStart = "${self}/bin/local-ai --debug --threads ${toString cores} --models-path ${models} --localai-config-dir . --address :${port}";
+          };
+        };
+      testScript =
+        let
+          # https://localai.io/features/text-generation/#chat-completions
+          request-chat-completions = {
+            model = gguf.name;
+            messages = [{ role = "user"; content = "Say this is a test!"; }];
+            temperature = 0.7;
+          };
+          # https://localai.io/features/text-generation/#edit-completions
+          request-edit-completions = {
+            model = gguf.name;
+            instruction = "rephrase";
+            input = "Black cat jumped out of the window";
+            temperature = 0.7;
+          };
+          # https://localai.io/features/text-generation/#completions
+          request-completions = {
+            model = gguf.name;
+            prompt = "A long time ago in a galaxy far, far away";
+            temperature = 0.7;
+          };
+        in
+        ''
+          machine.wait_for_open_port(${port})
+          machine.succeed("curl -f http://localhost:${port}/readyz")
+          machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${gguf.name}\"' models.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/chat/completions --json @${writers.writeJSON "request-chat-completions.json" request-chat-completions} --output chat-completions.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"chat.completion\"' chat-completions.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/edits --json @${writers.writeJSON "request-edit-completions.json" request-edit-completions} --output edit-completions.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"edit\"' edit-completions.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" request-completions} --output completions.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
+        '';
+    };
+
 } // lib.optionalAttrs self.features.with_tts {
   # https://localai.io/features/text-to-audio/#piper
   tts =
