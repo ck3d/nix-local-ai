@@ -8,34 +8,38 @@
 , linkFarmFromDrvs
 , jq
 }:
+let
+  common-config = { config, ... }: {
+    imports = [ ./module.nix ];
+    services.local-ai = {
+      enable = true;
+      package = self;
+      threads = config.virtualisation.cores;
+    };
+  };
+in
 {
   version = testers.testVersion {
     package = self;
     version = "v" + self.version;
   };
 
-  health =
-    let
-      port = "8080";
-    in
-    testers.runNixOSTest {
-      name = self.name + "-health";
-      nodes.machine = {
-        systemd.services.local-ai = {
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig.ExecStart = "${self}/bin/local-ai --debug --localai-config-dir . --address :${port}";
-        };
-      };
-      testScript = ''
+  health = testers.runNixOSTest ({ config, ... }: {
+    name = self.name + "-health";
+    nodes.machine = common-config;
+    testScript =
+      let
+        port = "8080";
+      in
+      ''
         machine.wait_for_open_port(${port})
         machine.succeed("curl -f http://localhost:${port}/readyz")
       '';
-    };
+  });
 
   # https://localai.io/docs/getting-started/manual/
   llama =
     let
-      port = "8080";
       gguf = fetchurl {
         url = "https://huggingface.co/TheBloke/Luna-AI-Llama2-Uncensored-GGUF/resolve/main/luna-ai-llama2-uncensored.Q4_K_M.gguf";
         sha256 = "6a9dc401c84f0d48996eaa405174999c3a33bf12c2bfd8ea4a1e98f376de1f15";
@@ -47,18 +51,11 @@
     testers.runNixOSTest {
       name = self.name + "-llama";
       nodes.machine =
-        let
-          cores = 4;
-        in
         {
-          virtualisation = {
-            inherit cores;
-            memorySize = 8192;
-          };
-          systemd.services.local-ai = {
-            wantedBy = [ "multi-user.target" ];
-            serviceConfig.ExecStart = "${self}/bin/local-ai --debug --threads ${toString cores} --models-path ${models} --localai-config-dir . --address :${port}";
-          };
+          imports = [ common-config ];
+          virtualisation.cores = 4;
+          virtualisation.memorySize = 8192;
+          services.local-ai.models = models;
         };
       testScript =
         let
@@ -81,6 +78,7 @@
             prompt = "A long time ago in a galaxy far, far away";
             temperature = 0.7;
           };
+          port = "8080";
         in
         ''
           machine.wait_for_open_port(${port})
@@ -98,7 +96,6 @@
   # https://localai.io/features/embeddings/#bert-embeddings
   bert =
     let
-      port = "8080";
       # Note: q4_0 and q4_1 models can not be loaded
       model-ggml = fetchurl {
         url = "https://huggingface.co/skeskinen/ggml/resolve/main/all-MiniLM-L6-v2/ggml-model-f16.bin";
@@ -112,31 +109,24 @@
       };
       models = linkFarmFromDrvs "models" [
         model-ggml
-        (writers.writeYAML "${model-config.name}.yaml" model-config)
+        (writers.writeYAML "namedontcare1.yaml" model-config)
       ];
     in
     testers.runNixOSTest {
       name = self.name + "-bert";
-      nodes.machine =
-        let
-          cores = 2;
-        in
-        {
-          virtualisation = {
-            inherit cores;
-            memorySize = 2048;
-          };
-          systemd.services.local-ai = {
-            wantedBy = [ "multi-user.target" ];
-            serviceConfig.ExecStart = "${self}/bin/local-ai --debug --threads ${toString cores} --models-path ${models} --localai-config-dir . --address :${port}";
-          };
-        };
+      nodes.machine = {
+        imports = [ common-config ];
+        virtualisation.cores = 2;
+        virtualisation.memorySize = 2048;
+        services.local-ai.models = models;
+      };
       testScript =
         let
           request = {
             model = model-config.name;
             input = "Your text string goes here";
           };
+          port = "8080";
         in
         ''
           machine.wait_for_open_port(${port})
@@ -153,8 +143,8 @@
   # https://localai.io/features/text-to-audio/#piper
   tts =
     let
-      port = "8080";
       voice-en-us = fetchzip {
+        name = "en-us-danny-low.onnx";
         url = "https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-en-us-danny-low.tar.gz";
         hash = "sha256-5wf+6H5HeQY0qgdqnAG1vSqtjIFM9lXH53OgouuPm0M=";
         stripRoot = false;
@@ -168,43 +158,44 @@
         backend = "whisper";
         parameters.model = ggml-tiny-en.name;
       };
+      piper-en = {
+        name = "piper-en";
+        backend = "piper";
+        parameters.model = voice-en-us.name;
+      };
       models = symlinkJoin {
         name = "models";
         paths = [
           voice-en-us
-          (linkFarmFromDrvs "whisper-en" [
-            (writers.writeYAML "whisper-en.yaml" whisper-en)
+          (linkFarmFromDrvs "models" [
+            (writers.writeYAML "namedontcare1.yaml" whisper-en)
             ggml-tiny-en
+            (writers.writeYAML "namedontcare2.yaml" piper-en)
           ])
         ];
       };
     in
     testers.runNixOSTest {
       name = self.name + "-tts";
-      nodes.machine =
-        let
-          cores = 2;
-        in
-        {
-          virtualisation = {
-            inherit cores;
-          };
-          systemd.services.local-ai = {
-            wantedBy = [ "multi-user.target" ];
-            serviceConfig.ExecStart = "${self}/bin/local-ai --debug --threads ${toString cores} --models-path ${models} --localai-config-dir . --address :${port}";
-          };
-        };
+      nodes.machine = {
+        imports = [ common-config ];
+        virtualisation.cores = 2;
+        services.local-ai.models = models;
+      };
       testScript =
         let
           request = {
-            model = "en-us-danny-low.onnx";
+            model = piper-en.name;
             backend = "piper";
             input = "Hello, how are you?";
           };
+          port = "8080";
         in
         ''
           machine.wait_for_open_port(${port})
           machine.succeed("curl -f http://localhost:${port}/readyz")
+          machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug' models.json")
           machine.succeed("curl -f http://localhost:${port}/tts --json @${writers.writeJSON "request.json" request} --output out.wav")
           machine.succeed("curl -f http://localhost:${port}/v1/audio/transcriptions --header 'Content-Type: multipart/form-data' --form file=@out.wav --form model=${whisper-en.name} --output transcription.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .segments | first.text == \"${request.input}\"' transcription.json")
