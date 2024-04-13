@@ -37,6 +37,52 @@ in
       '';
   });
 
+  # https://localai.io/features/embeddings/#bert-embeddings
+  bert =
+    let
+      # Note: q4_0 and q4_1 models can not be loaded
+      model-ggml = fetchurl {
+        url = "https://huggingface.co/skeskinen/ggml/resolve/main/all-MiniLM-L6-v2/ggml-model-f16.bin";
+        sha256 = "9c195b2453a4fef60a4f6be3a88a39211366214df6498a4fe4885c9e22314f50";
+      };
+      model-config = {
+        name = "embedding";
+        parameters.model = model-ggml.name;
+        backend = "bert-embeddings";
+        embeddings = true;
+      };
+      models = linkFarmFromDrvs "models" [
+        model-ggml
+        (writers.writeYAML "namedontcare1.yaml" model-config)
+      ];
+    in
+    testers.runNixOSTest {
+      name = self.name + "-bert";
+      nodes.machine = {
+        imports = [ common-config ];
+        virtualisation.cores = 2;
+        virtualisation.memorySize = 2048;
+        services.local-ai.models = models;
+      };
+      testScript =
+        let
+          request = {
+            model = model-config.name;
+            input = "Your text string goes here";
+          };
+          port = "8080";
+        in
+        ''
+          machine.wait_for_open_port(${port})
+          machine.succeed("curl -f http://localhost:${port}/readyz")
+          machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
+          machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" request} --output embeddings.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"embedding\"' embeddings.json")
+        '';
+    };
+
+} // lib.optionalAttrs (!self.features.with_cublas && !self.features.with_clblas) {
   # https://localai.io/docs/getting-started/manual/
   llama =
     let
@@ -93,53 +139,8 @@ in
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
         '';
     };
-  # https://localai.io/features/embeddings/#bert-embeddings
-  bert =
-    let
-      # Note: q4_0 and q4_1 models can not be loaded
-      model-ggml = fetchurl {
-        url = "https://huggingface.co/skeskinen/ggml/resolve/main/all-MiniLM-L6-v2/ggml-model-f16.bin";
-        sha256 = "9c195b2453a4fef60a4f6be3a88a39211366214df6498a4fe4885c9e22314f50";
-      };
-      model-config = {
-        name = "embedding";
-        parameters.model = model-ggml.name;
-        backend = "bert-embeddings";
-        embeddings = true;
-      };
-      models = linkFarmFromDrvs "models" [
-        model-ggml
-        (writers.writeYAML "namedontcare1.yaml" model-config)
-      ];
-    in
-    testers.runNixOSTest {
-      name = self.name + "-bert";
-      nodes.machine = {
-        imports = [ common-config ];
-        virtualisation.cores = 2;
-        virtualisation.memorySize = 2048;
-        services.local-ai.models = models;
-      };
-      testScript =
-        let
-          request = {
-            model = model-config.name;
-            input = "Your text string goes here";
-          };
-          port = "8080";
-        in
-        ''
-          machine.wait_for_open_port(${port})
-          machine.succeed("curl -f http://localhost:${port}/readyz")
-          machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
-          machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" request} --output embeddings.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"embedding\"' embeddings.json")
-        '';
-    };
 
-
-} // lib.optionalAttrs self.features.with_tts {
+} // lib.optionalAttrs (self.features.with_tts && !self.features.with_cublas && !self.features.with_clblas) {
   # https://localai.io/features/text-to-audio/#piper
   tts =
     let
