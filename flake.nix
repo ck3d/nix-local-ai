@@ -8,60 +8,57 @@
 
   outputs = { self, nixpkgs, nixpkgs-unstable }:
     let
-      forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
-      overlays.default = import ./overlay.nix;
+      inherit (nixpkgs) lib;
+      forAllSystems = lib.genAttrs lib.systems.flakeExposed;
     in
     {
-      inherit overlays;
+      overlays.default = import ./overlay.nix;
 
       packages = forAllSystems
         (system:
           let
-            pkgs = import nixpkgs {
+            pkgs-stable = import nixpkgs {
               inherit system;
-              overlays = builtins.attrValues overlays;
+              overlays = builtins.attrValues self.overlays;
+              config = { allowUnfree = true; };
+            };
+            pkgs-unstable = import nixpkgs-unstable {
+              inherit system;
+              overlays = builtins.attrValues self.overlays;
               config = { allowUnfree = true; };
             };
           in
-          pkgs.nix-local-ai
-          // { default = pkgs.nix-local-ai.local-ai; }
-        );
-
-      legacyPackages = forAllSystems
-        (system:
-          let
-            pkgs = import nixpkgs-unstable {
-              inherit system;
-              overlays = builtins.attrValues overlays;
-              config = { allowUnfree = true; };
-            };
-          in
-          { unstable = pkgs.nix-local-ai; }
+          {
+            local-ai-openblas-nixos2311 = pkgs-stable.nix-local-ai.local-ai.override { with_openblas = true; };
+            local-ai-cublas-nixos2311 = pkgs-stable.nix-local-ai.local-ai.override { with_cublas = true; };
+            default = pkgs-unstable.nix-local-ai.local-ai;
+          }
+          // pkgs-unstable.nix-local-ai
+          // builtins.listToAttrs
+            (map
+              (type: {
+                name = "local-ai-" + type;
+                value = pkgs-unstable.nix-local-ai.local-ai.override {
+                  "with_${type}" = true;
+                  # tinydream can not compiled with cublas gcc
+                  with_tinydream = type != "cublas";
+                };
+              }) [ "cublas" "clblas" "openblas" ])
         );
 
       checks = forAllSystems
         (system:
           let
-            pkgs-unstable = import nixpkgs-unstable {
-              inherit system;
-              overlays = builtins.attrValues overlays;
-              config = { allowUnfree = true; };
-            };
+            packages = self.packages.${system};
           in
-          {
-            inherit (pkgs-unstable.nix-local-ai.local-ai.passthru.tests) version health tts;
-          }
-          // builtins.listToAttrs
-            (map
-              (type: {
-                name = "health-" + type;
-                value = (pkgs-unstable.nix-local-ai.local-ai.override {
-                  "with_${type}" = true;
-                  # tinydream can not compiled with cublas gcc
-                  with_tinydream = type != "cublas";
-                }).passthru.tests.health;
-              })
-              [ "cublas" "clblas" "openblas" ])
+          packages
+          // (builtins.foldl'
+            (acc: package: acc // (lib.mapAttrs'
+              (test: value: { name = package + "-test-" + test; inherit value; })
+              (packages.${package}.tests or { }))
+            )
+            { }
+            (builtins.attrNames packages))
         );
     };
 }
