@@ -1,0 +1,29 @@
+From b82d00f856e24d17a798b30550c89100ea795f61 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christian=20K=C3=B6gler?= <ck3d@gmx.de>
+Date: Sun, 14 Apr 2024 08:12:00 +0200
+Subject: [PATCH 2/3] Use local font
+
+---
+ pages/_app.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pages/_app.tsx b/pages/_app.tsx
+index 0ef2d18..e60765c 100644
+--- a/pages/_app.tsx
++++ b/pages/_app.tsx
+@@ -1,10 +1,10 @@
+ import '@/styles/globals.css';
+ import { appWithTranslation } from 'next-i18next';
+ import type { AppProps } from 'next/app';
+-import { Inter } from 'next/font/google';
++import localFont from 'next/font/local';
+ import { Toaster } from 'react-hot-toast';
+ 
+-const inter = Inter({ subsets: ['latin'] });
++const inter = localFont({ src: '../Inter-Regular.otf' });
+ 
+ function App({ Component, pageProps }: AppProps<{}>) {
+   return (
+-- 
+2.42.0
+

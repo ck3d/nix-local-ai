@@ -23,13 +23,12 @@ buildNpmPackage rec {
   };
 
   patches = [
-    # - updated package.json as recommended by npm
-    # - use local font
-    # - use next standalone output
-    ./default.patch
+    ./0001-next.config-Add-output-standalone.patch
+    ./0002-Use-local-font.patch
+    ./0003-Update-npm-packages.patch
   ];
 
-  npmDepsHash = "sha256-Cg3TMIfpIEhoxYwXxlPPdWSsqkI+Wpvq98e1AxDC270=";
+  npmDepsHash = "sha256-YF2TFXjdPyCVNWCJreP/GCAuVmKZf25m4gbyyX5OI+A=";
 
   nativeBuildInputs = [
     makeWrapper
