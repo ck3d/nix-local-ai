@@ -3,14 +3,8 @@
 , fetchFromGitHub
 , makeWrapper
 , fetchzip
+, inter
 }:
-let
-  inter = fetchzip {
-    url = "https://github.com/rsms/inter/releases/download/v3.19/Inter-3.19.zip";
-    stripRoot = false;
-    hash = "sha256-6kUQUTFtxiJEU6sYC6HzMwm1H4wvaKIoxoY3F6GJJa8=";
-  };
-in
 buildNpmPackage rec {
   pname = "chatbot-ui-legacy";
   version = "20230404";
@@ -35,7 +29,7 @@ buildNpmPackage rec {
   ];
 
   postConfigure = ''
-    cp "${inter}/Inter Desktop/Inter-Regular.otf" .
+    cp ${inter.src}/*.ttf .
   '';
 
   # inspired by

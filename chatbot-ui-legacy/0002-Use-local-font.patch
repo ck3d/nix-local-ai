@@ -20,7 +20,7 @@ index 0ef2d18..e60765c 100644
  import { Toaster } from 'react-hot-toast';
  
 -const inter = Inter({ subsets: ['latin'] });
-+const inter = localFont({ src: '../Inter-Regular.otf' });
++const inter = localFont({ src: '../InterVariable.ttf' });
  
  function App({ Component, pageProps }: AppProps<{}>) {
    return (

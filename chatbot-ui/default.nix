@@ -5,15 +5,8 @@
 , fetchzip
 , vips
 , pkg-config
-}:
-let
-  inter = fetchzip {
-    url = "https://github.com/rsms/inter/releases/download/v3.19/Inter-3.19.zip";
-    stripRoot = false;
-    hash = "sha256-6kUQUTFtxiJEU6sYC6HzMwm1H4wvaKIoxoY3F6GJJa8=";
-  };
-in
-buildNpmPackage rec {
+, inter
+}: buildNpmPackage rec {
   pname = "chatbot-ui";
   version = "20240402";
 
@@ -25,7 +18,8 @@ buildNpmPackage rec {
   };
 
   patches = [
-    ./default.patch
+    ./0001-Set-nextjs-output-to-standalone.patch
+    ./0002-Use-local-font.patch
   ];
 
   npmDepsHash = "sha256-708oOP26UOZ0MfclDg5doke8O1OnwbP4m62WXpty8Mc=";
@@ -40,7 +34,7 @@ buildNpmPackage rec {
   ];
 
   postConfigure = ''
-    cp "${inter}/Inter Desktop/Inter-Regular.otf" .
+    cp ${inter.src}/*.ttf .
   '';
 
   # inspired by

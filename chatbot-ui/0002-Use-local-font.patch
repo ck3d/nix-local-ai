@@ -1,0 +1,31 @@
+From a4eef73d6e6608c169e9d2feef2d6f58ee28b5af Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christian=20K=C3=B6gler?= <ck3d@gmx.de>
+Date: Wed, 17 Apr 2024 21:57:57 +0200
+Subject: [PATCH 2/2] Use local font
+
+---
+ app/[locale]/layout.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/app/[locale]/layout.tsx b/app/[locale]/layout.tsx
+index 474058a..b9af9eb 100644
+--- a/app/[locale]/layout.tsx
++++ b/app/[locale]/layout.tsx
+@@ -6,12 +6,12 @@ import initTranslations from "@/lib/i18n"
+ import { Database } from "@/supabase/types"
+ import { createServerClient } from "@supabase/ssr"
+ import { Metadata, Viewport } from "next"
+-import { Inter } from "next/font/google"
++import localFont from "next/font/local"
+ import { cookies } from "next/headers"
+ import { ReactNode } from "react"
+ import "./globals.css"
+ 
+-const inter = Inter({ subsets: ["latin"] })
++const inter = localFont({ src: "../../InterVariable.ttf" })
+ const APP_NAME = "Chatbot UI"
+ const APP_DEFAULT_TITLE = "Chatbot UI"
+ const APP_TITLE_TEMPLATE = "%s - Chatbot UI"
+-- 
+2.42.0
+
