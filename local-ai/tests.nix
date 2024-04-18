@@ -55,6 +55,10 @@ in
         model-ggml
         (writers.writeYAML "namedontcare1.yaml" model-config)
       ];
+      requests.request = {
+        model = model-config.name;
+        input = "Your text string goes here";
+      };
     in
     testers.runNixOSTest {
       name = self.name + "-bert";
@@ -64,13 +68,9 @@ in
         virtualisation.memorySize = 2048;
         services.local-ai.models = models;
       };
-      passthru.models = models;
+      passthru = { inherit models requests; };
       testScript =
         let
-          request = {
-            model = model-config.name;
-            input = "Your text string goes here";
-          };
           port = "8080";
         in
         ''
@@ -78,7 +78,7 @@ in
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
-          machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" request} --output embeddings.json")
+          machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" requests.request} --output embeddings.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"embedding\"' embeddings.json")
         '';
     };
@@ -94,6 +94,27 @@ in
       models = linkFarmFromDrvs "models" [
         gguf
       ];
+      requests = {
+        # https://localai.io/features/text-generation/#chat-completions
+        chat-completions = {
+          model = gguf.name;
+          messages = [{ role = "user"; content = "Say this is a test!"; }];
+          temperature = 0.7;
+        };
+        # https://localai.io/features/text-generation/#edit-completions
+        edit-completions = {
+          model = gguf.name;
+          instruction = "rephrase";
+          input = "Black cat jumped out of the window";
+          temperature = 0.7;
+        };
+        # https://localai.io/features/text-generation/#completions
+        completions = {
+          model = gguf.name;
+          prompt = "A long time ago in a galaxy far, far away";
+          temperature = 0.7;
+        };
+      };
     in
     testers.runNixOSTest {
       name = self.name + "-llama";
@@ -103,28 +124,9 @@ in
         virtualisation.memorySize = 8192;
         services.local-ai.models = models;
       };
-      passthru.models = models;
+      passthru = { inherit models requests; };
       testScript =
         let
-          # https://localai.io/features/text-generation/#chat-completions
-          request-chat-completions = {
-            model = gguf.name;
-            messages = [{ role = "user"; content = "Say this is a test!"; }];
-            temperature = 0.7;
-          };
-          # https://localai.io/features/text-generation/#edit-completions
-          request-edit-completions = {
-            model = gguf.name;
-            instruction = "rephrase";
-            input = "Black cat jumped out of the window";
-            temperature = 0.7;
-          };
-          # https://localai.io/features/text-generation/#completions
-          request-completions = {
-            model = gguf.name;
-            prompt = "A long time ago in a galaxy far, far away";
-            temperature = 0.7;
-          };
           port = "8080";
         in
         ''
@@ -132,11 +134,11 @@ in
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${gguf.name}\"' models.json")
-          machine.succeed("curl -f http://localhost:${port}/v1/chat/completions --json @${writers.writeJSON "request-chat-completions.json" request-chat-completions} --output chat-completions.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/chat/completions --json @${writers.writeJSON "request-chat-completions.json" requests.chat-completions} --output chat-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"chat.completion\"' chat-completions.json")
-          machine.succeed("curl -f http://localhost:${port}/v1/edits --json @${writers.writeJSON "request-edit-completions.json" request-edit-completions} --output edit-completions.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/edits --json @${writers.writeJSON "request-edit-completions.json" requests.edit-completions} --output edit-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"edit\"' edit-completions.json")
-          machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" request-completions} --output completions.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" requests.completions} --output completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
         '';
     };
@@ -176,6 +178,11 @@ in
           ])
         ];
       };
+      requests.request = {
+        model = piper-en.name;
+        backend = "piper";
+        input = "Hello, how are you?";
+      };
     in
     testers.runNixOSTest {
       name = self.name + "-tts";
@@ -184,14 +191,9 @@ in
         virtualisation.cores = 2;
         services.local-ai.models = models;
       };
-      passthru.models = models;
+      passthru = { inherit models requests; };
       testScript =
         let
-          request = {
-            model = piper-en.name;
-            backend = "piper";
-            input = "Hello, how are you?";
-          };
           port = "8080";
         in
         ''
@@ -199,9 +201,9 @@ in
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug' models.json")
-          machine.succeed("curl -f http://localhost:${port}/tts --json @${writers.writeJSON "request.json" request} --output out.wav")
+          machine.succeed("curl -f http://localhost:${port}/tts --json @${writers.writeJSON "request.json" requests.request} --output out.wav")
           machine.succeed("curl -f http://localhost:${port}/v1/audio/transcriptions --header 'Content-Type: multipart/form-data' --form file=@out.wav --form model=${whisper-en.name} --output transcription.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .segments | first.text == \"${request.input}\"' transcription.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .segments | first.text == \"${requests.request.input}\"' transcription.json")
         '';
     };
 }
