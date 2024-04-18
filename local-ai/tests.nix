@@ -97,13 +97,12 @@ in
     in
     testers.runNixOSTest {
       name = self.name + "-llama";
-      nodes.machine =
-        {
-          imports = [ common-config ];
-          virtualisation.cores = 4;
-          virtualisation.memorySize = 8192;
-          services.local-ai.models = models;
-        };
+      nodes.machine = {
+        imports = [ common-config ];
+        virtualisation.cores = 4;
+        virtualisation.memorySize = 8192;
+        services.local-ai.models = models;
+      };
       passthru.models = models;
       testScript =
         let
