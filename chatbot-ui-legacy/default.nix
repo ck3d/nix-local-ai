@@ -28,6 +28,9 @@ buildNpmPackage rec {
     makeWrapper
   ];
 
+  # https://nextjs.org/telemetry
+  env.NEXT_TELEMETRY_DISABLED = 1;
+
   postConfigure = ''
     cp ${inter.src}/*.ttf .
   '';
