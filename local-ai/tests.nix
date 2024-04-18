@@ -87,32 +87,38 @@ in
   # https://localai.io/docs/getting-started/manual/
   llama =
     let
-      gguf = fetchurl {
+      model-gguf = fetchurl {
         url = "https://huggingface.co/TheBloke/Luna-AI-Llama2-Uncensored-GGUF/resolve/main/luna-ai-llama2-uncensored.Q4_K_M.gguf";
         sha256 = "6a9dc401c84f0d48996eaa405174999c3a33bf12c2bfd8ea4a1e98f376de1f15";
       };
+      model-config = {
+        name = "gpt-3.5-turbo";
+        parameters = {
+          model = model-gguf.name;
+          temperature = 0.7;
+        };
+        backend = "llama";
+      };
       models = linkFarmFromDrvs "models" [
-        gguf
+        model-gguf
+        (writers.writeYAML "namedontcare1.yaml" model-config)
       ];
       requests = {
         # https://localai.io/features/text-generation/#chat-completions
         chat-completions = {
-          model = gguf.name;
+          model = model-config.name;
           messages = [{ role = "user"; content = "Say this is a test!"; }];
-          temperature = 0.7;
         };
         # https://localai.io/features/text-generation/#edit-completions
         edit-completions = {
-          model = gguf.name;
+          model = model-config.name;
           instruction = "rephrase";
           input = "Black cat jumped out of the window";
-          temperature = 0.7;
         };
         # https://localai.io/features/text-generation/#completions
         completions = {
-          model = gguf.name;
+          model = model-config.name;
           prompt = "A long time ago in a galaxy far, far away";
-          temperature = 0.7;
         };
       };
     in
@@ -133,7 +139,7 @@ in
           machine.wait_for_open_port(${port})
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${gguf.name}\"' models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
           machine.succeed("curl -f http://localhost:${port}/v1/chat/completions --json @${writers.writeJSON "request-chat-completions.json" requests.chat-completions} --output chat-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"chat.completion\"' chat-completions.json")
           machine.succeed("curl -f http://localhost:${port}/v1/edits --json @${writers.writeJSON "request-edit-completions.json" requests.edit-completions} --output edit-completions.json")
