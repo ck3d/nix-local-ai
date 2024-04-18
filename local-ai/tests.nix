@@ -64,6 +64,7 @@ in
         virtualisation.memorySize = 2048;
         services.local-ai.models = models;
       };
+      passthru.models = models;
       testScript =
         let
           request = {
@@ -103,6 +104,7 @@ in
           virtualisation.memorySize = 8192;
           services.local-ai.models = models;
         };
+      passthru.models = models;
       testScript =
         let
           # https://localai.io/features/text-generation/#chat-completions
@@ -183,6 +185,7 @@ in
         virtualisation.cores = 2;
         services.local-ai.models = models;
       };
+      passthru.models = models;
       testScript =
         let
           request = {
