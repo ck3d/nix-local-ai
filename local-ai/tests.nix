@@ -4,6 +4,7 @@
 , fetchzip
 , fetchurl
 , writers
+, writeText
 , symlinkJoin
 , linkFarmFromDrvs
 , jq
@@ -87,20 +88,48 @@ in
   # https://localai.io/docs/getting-started/manual/
   llama =
     let
+      # https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF
+      # https://ai.meta.com/blog/meta-llama-3/
       model-gguf = fetchurl {
-        url = "https://huggingface.co/TheBloke/Luna-AI-Llama2-Uncensored-GGUF/resolve/main/luna-ai-llama2-uncensored.Q4_K_M.gguf";
-        sha256 = "6a9dc401c84f0d48996eaa405174999c3a33bf12c2bfd8ea4a1e98f376de1f15";
+        url = "https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf";
+        sha256 = "ab9e4eec7e80892fd78f74d9a15d0299f1e22121cea44efd68a7a02a3fe9a1da";
       };
+      stopWord = "<|eot_id|>";
+      # https://github.com/mudler/LocalAI/blob/master/embedded/models/llama3-instruct.yaml
+      tmpl-chat-message = writeText "chat-message.tmpl" ''
+        <|start_header_id|>{{if eq .RoleName "assistant"}}assistant{{else if eq .RoleName "system"}}system{{else if eq .RoleName "tool"}}tool{{else if eq .RoleName "user"}}user{{end}}<|end_header_id|>
+
+        {{ if .Content -}}{{.Content -}}{{ end -}}${stopWord}'';
+      tmpl-chat = writeText "chat.tmpl"
+        "<|begin_of_text|>{{.Input }}<|start_header_id|>assistant<|end_header_id|>";
+      # https://localai.io/advanced/#full-config-model-file-reference
       model-config = {
         name = "gpt-3.5-turbo";
+        conext_size = 4096;
         parameters = {
           model = model-gguf.name;
+          # defaults from:
+          # https://deepinfra.com/meta-llama/Meta-Llama-3-8B-Instruct
           temperature = 0.7;
+          top_p = 0.9;
+          top_k = 0;
+          max_tokens = 512;
+          # following parameter leads to outputs like: !!!!!!!!!!!!!!!!!!!
+          #repeat_penalty = 1;
+          presence_penalty = 0;
+          frequency_penalty = 0;
         };
-        backend = "llama";
+        stopwords = [ stopWord ];
+        # https://github.com/meta-llama/llama3/tree/main?tab=readme-ov-file#instruction-tuned-models
+        template = {
+          chat = lib.removeSuffix ".tmpl" tmpl-chat.name;
+          chat_message = lib.removeSuffix ".tmpl" tmpl-chat-message.name;
+        };
       };
       models = linkFarmFromDrvs "models" [
         model-gguf
+        tmpl-chat
+        tmpl-chat-message
         (writers.writeYAML "namedontcare1.yaml" model-config)
       ];
       requests = {
