@@ -98,8 +98,8 @@ let
     src = fetchFromGitHub {
       owner = "ggerganov";
       repo = "llama.cpp";
-      rev = "1b67731e184e27a465b8c5476061294a4af668ea";
-      hash = "sha256-0WWbsklpW6HhFRkvWpYh8Lhi8VIansS/zmyIKNQRkIs=";
+      rev = "0e4802b2ecbaab04b4f829fde4a3096ca19c84b5";
+      hash = "sha256-7EHABsfZ4Ka3vM8Wae9bSIbGw1cTKTqgCbYgFPu33nQ=";
       fetchSubmodules = true;
     };
     postPatch = prev.postPatch + ''
