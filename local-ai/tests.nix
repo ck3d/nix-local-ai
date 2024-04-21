@@ -18,6 +18,31 @@ let
       threads = config.virtualisation.cores;
     };
   };
+
+  genModels = configs:
+    let
+      name = lib.strings.sanitizeDerivationName
+        (builtins.concatStringsSep "_" ([ "local-ai-models" ] ++ (builtins.attrNames configs)));
+
+      genModelFiles = name: config:
+        let
+          templateName = type: name + "_" + type;
+
+          config' = lib.recursiveUpdate config ({
+            inherit name;
+          } // lib.optionalAttrs (lib.isDerivation config.parameters.model) {
+            parameters.model = config.parameters.model.name;
+          } // lib.optionalAttrs (config ? template) {
+            template = builtins.mapAttrs (n: _: templateName n) config.template;
+          });
+        in
+        [ (writers.writeYAML "${name}.yaml" config') ]
+        ++ lib.optional (lib.isDerivation config.parameters.model)
+          config.parameters.model
+        ++ lib.optionals (config ? template)
+          (lib.mapAttrsToList (n: writeText "${templateName n}.tmpl") config.template);
+    in
+    linkFarmFromDrvs name (lib.flatten (lib.mapAttrsToList genModelFiles configs));
 in
 {
   version = testers.testVersion {
@@ -41,23 +66,21 @@ in
   # https://localai.io/features/embeddings/#bert-embeddings
   bert =
     let
-      # Note: q4_0 and q4_1 models can not be loaded
-      model-ggml = fetchurl {
-        url = "https://huggingface.co/skeskinen/ggml/resolve/main/all-MiniLM-L6-v2/ggml-model-f16.bin";
-        sha256 = "9c195b2453a4fef60a4f6be3a88a39211366214df6498a4fe4885c9e22314f50";
-      };
-      model-config = {
-        name = "embedding";
-        parameters.model = model-ggml.name;
+      model = "embedding";
+      model-configs.${model} = {
+        # Note: q4_0 and q4_1 models can not be loaded
+        parameters.model = fetchurl {
+          url = "https://huggingface.co/skeskinen/ggml/resolve/main/all-MiniLM-L6-v2/ggml-model-f16.bin";
+          sha256 = "9c195b2453a4fef60a4f6be3a88a39211366214df6498a4fe4885c9e22314f50";
+        };
         backend = "bert-embeddings";
         embeddings = true;
       };
-      models = linkFarmFromDrvs "models" [
-        model-ggml
-        (writers.writeYAML "namedontcare1.yaml" model-config)
-      ];
+
+      models = genModels model-configs;
+
       requests.request = {
-        model = model-config.name;
+        inherit model;
         input = "Your text string goes here";
       };
     in
@@ -78,9 +101,9 @@ in
           machine.wait_for_open_port(${port})
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model}\"' models.json")
           machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" requests.request} --output embeddings.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"embedding\"' embeddings.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"${model}\"' embeddings.json")
         '';
     };
 
@@ -88,33 +111,18 @@ in
   # https://localai.io/docs/getting-started/manual/
   llama =
     let
-      # https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF
-      # https://ai.meta.com/blog/meta-llama-3/
-      model-gguf = fetchurl {
-        url = "https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf";
-        sha256 = "ab9e4eec7e80892fd78f74d9a15d0299f1e22121cea44efd68a7a02a3fe9a1da";
-      };
-      # Templates implement following specifications
-      # https://github.com/meta-llama/llama3/tree/main?tab=readme-ov-file#instruction-tuned-models
-      # ... and are insprired by:
-      # https://github.com/mudler/LocalAI/blob/master/embedded/models/llama3-instruct.yaml
-      #
-      # The rules for template evaluateion are defined here:
-      # https://pkg.go.dev/text/template
-      tmpl-chat-message = writeText "chat-message.tmpl" ''
-        <|start_header_id|>{{.RoleName}}<|end_header_id|>
-
-        {{.Content}}${builtins.head model-config.stopwords}'';
-
-      tmpl-chat = writeText "chat.tmpl"
-        "<|begin_of_text|>{{.Input}}<|start_header_id|>assistant<|end_header_id|>";
+      model = "gpt-3.5-turbo";
 
       # https://localai.io/advanced/#full-config-model-file-reference
-      model-config = {
-        name = "gpt-3.5-turbo";
+      model-configs.${model} = rec {
         conext_size = 8192;
         parameters = {
-          model = model-gguf.name;
+          # https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF
+          # https://ai.meta.com/blog/meta-llama-3/
+          model = fetchurl {
+            url = "https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf";
+            sha256 = "ab9e4eec7e80892fd78f74d9a15d0299f1e22121cea44efd68a7a02a3fe9a1da";
+          };
           # defaults from:
           # https://deepinfra.com/meta-llama/Meta-Llama-3-8B-Instruct
           temperature = 0.7;
@@ -128,31 +136,39 @@ in
         };
         stopwords = [ "<|eot_id|>" ];
         template = {
-          chat = lib.removeSuffix ".tmpl" tmpl-chat.name;
-          chat_message = lib.removeSuffix ".tmpl" tmpl-chat-message.name;
+          # Templates implement following specifications
+          # https://github.com/meta-llama/llama3/tree/main?tab=readme-ov-file#instruction-tuned-models
+          # ... and are insprired by:
+          # https://github.com/mudler/LocalAI/blob/master/embedded/models/llama3-instruct.yaml
+          #
+          # The rules for template evaluateion are defined here:
+          # https://pkg.go.dev/text/template
+          chat_message = ''
+            <|start_header_id|>{{.RoleName}}<|end_header_id|>
+
+            {{.Content}}${builtins.head stopwords}'';
+
+          chat = "<|begin_of_text|>{{.Input}}<|start_header_id|>assistant<|end_header_id|>";
         };
       };
-      models = linkFarmFromDrvs "models" [
-        model-gguf
-        tmpl-chat
-        tmpl-chat-message
-        (writers.writeYAML "namedontcare1.yaml" model-config)
-      ];
+
+      models = genModels model-configs;
+
       requests = {
         # https://localai.io/features/text-generation/#chat-completions
         chat-completions = {
-          model = model-config.name;
+          inherit model;
           messages = [{ role = "user"; content = "1 + 2 = ?"; }];
         };
         # https://localai.io/features/text-generation/#edit-completions
         edit-completions = {
-          model = model-config.name;
+          inherit model;
           instruction = "rephrase";
           input = "Black cat jumped out of the window";
         };
         # https://localai.io/features/text-generation/#completions
         completions = {
-          model = model-config.name;
+          inherit model;
           prompt = "A long time ago in a galaxy far, far away";
         };
       };
@@ -174,7 +190,7 @@ in
           machine.wait_for_open_port(${port})
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
-          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model}\"' models.json")
 
           machine.succeed("curl -f http://localhost:${port}/v1/chat/completions --json @${writers.writeJSON "request-chat-completions.json" requests.chat-completions} --output chat-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"chat.completion\"' chat-completions.json")
@@ -192,40 +208,39 @@ in
   # https://localai.io/features/text-to-audio/#piper
   tts =
     let
-      voice-en-us = fetchzip {
-        name = "en-us-danny-low.onnx";
-        url = "https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-en-us-danny-low.tar.gz";
-        hash = "sha256-5wf+6H5HeQY0qgdqnAG1vSqtjIFM9lXH53OgouuPm0M=";
-        stripRoot = false;
-      };
-      ggml-tiny-en = fetchurl {
-        url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin";
-        hash = "sha256-x3xXZvHO8JtrfUfyG1Rsvd1BV4hrO11tT3CekeZsfCs=";
-      };
-      whisper-en = {
-        name = "whisper-en";
+      model-stt = "whisper-en";
+      model-configs.${model-stt} = {
         backend = "whisper";
-        parameters.model = ggml-tiny-en.name;
+        parameters.model = fetchurl {
+          url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin";
+          hash = "sha256-x3xXZvHO8JtrfUfyG1Rsvd1BV4hrO11tT3CekeZsfCs=";
+        };
       };
-      piper-en = {
-        name = "piper-en";
+
+      model-tts = "piper-en";
+      model-configs.${model-tts} = {
         backend = "piper";
-        parameters.model = voice-en-us.name;
+        parameters.model = "en-us-danny-low.onnx";
       };
-      models = symlinkJoin {
-        name = "models";
-        paths = [
-          voice-en-us
-          (linkFarmFromDrvs "models" [
-            (writers.writeYAML "namedontcare1.yaml" whisper-en)
-            ggml-tiny-en
-            (writers.writeYAML "namedontcare2.yaml" piper-en)
-          ])
-        ];
-      };
+
+      models =
+        let
+          models = genModels model-configs;
+        in
+        symlinkJoin {
+          inherit (models) name;
+          paths = [
+            models
+            (fetchzip {
+              url = "https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-en-us-danny-low.tar.gz";
+              hash = "sha256-5wf+6H5HeQY0qgdqnAG1vSqtjIFM9lXH53OgouuPm0M=";
+              stripRoot = false;
+            })
+          ];
+        };
+
       requests.request = {
-        model = piper-en.name;
-        backend = "piper";
+        model = model-tts;
         input = "Hello, how are you?";
       };
     in
@@ -247,7 +262,7 @@ in
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug' models.json")
           machine.succeed("curl -f http://localhost:${port}/tts --json @${writers.writeJSON "request.json" requests.request} --output out.wav")
-          machine.succeed("curl -f http://localhost:${port}/v1/audio/transcriptions --header 'Content-Type: multipart/form-data' --form file=@out.wav --form model=${whisper-en.name} --output transcription.json")
+          machine.succeed("curl -f http://localhost:${port}/v1/audio/transcriptions --header 'Content-Type: multipart/form-data' --form file=@out.wav --form model=${model-stt} --output transcription.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .segments | first.text == \"${requests.request.input}\"' transcription.json")
         '';
     };
