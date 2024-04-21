@@ -94,14 +94,21 @@ in
         url = "https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf";
         sha256 = "ab9e4eec7e80892fd78f74d9a15d0299f1e22121cea44efd68a7a02a3fe9a1da";
       };
-      stopWord = "<|eot_id|>";
+      # Templates implement following specifications
+      # https://github.com/meta-llama/llama3/tree/main?tab=readme-ov-file#instruction-tuned-models
+      # ... and are insprired by:
       # https://github.com/mudler/LocalAI/blob/master/embedded/models/llama3-instruct.yaml
+      #
+      # The rules for template evaluateion are defined here:
+      # https://pkg.go.dev/text/template
       tmpl-chat-message = writeText "chat-message.tmpl" ''
-        <|start_header_id|>{{if eq .RoleName "assistant"}}assistant{{else if eq .RoleName "system"}}system{{else if eq .RoleName "tool"}}tool{{else if eq .RoleName "user"}}user{{end}}<|end_header_id|>
+        <|start_header_id|>{{.RoleName}}<|end_header_id|>
 
-        {{ if .Content -}}{{.Content -}}{{ end -}}${stopWord}'';
+        {{.Content}}${builtins.head model-config.stopwords}'';
+
       tmpl-chat = writeText "chat.tmpl"
-        "<|begin_of_text|>{{.Input }}<|start_header_id|>assistant<|end_header_id|>";
+        "<|begin_of_text|>{{.Input}}<|start_header_id|>assistant<|end_header_id|>";
+
       # https://localai.io/advanced/#full-config-model-file-reference
       model-config = {
         name = "gpt-3.5-turbo";
@@ -119,8 +126,7 @@ in
           presence_penalty = 0;
           frequency_penalty = 0;
         };
-        stopwords = [ stopWord ];
-        # https://github.com/meta-llama/llama3/tree/main?tab=readme-ov-file#instruction-tuned-models
+        stopwords = [ "<|eot_id|>" ];
         template = {
           chat = lib.removeSuffix ".tmpl" tmpl-chat.name;
           chat_message = lib.removeSuffix ".tmpl" tmpl-chat-message.name;
