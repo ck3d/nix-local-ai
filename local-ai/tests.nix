@@ -142,7 +142,7 @@ in
         # https://localai.io/features/text-generation/#chat-completions
         chat-completions = {
           model = model-config.name;
-          messages = [{ role = "user"; content = "Say this is a test!"; }];
+          messages = [{ role = "user"; content = "1 + 2 = ?"; }];
         };
         # https://localai.io/features/text-generation/#edit-completions
         edit-completions = {
@@ -175,10 +175,14 @@ in
           machine.succeed("curl -f http://localhost:${port}/readyz")
           machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model-config.name}\"' models.json")
+
           machine.succeed("curl -f http://localhost:${port}/v1/chat/completions --json @${writers.writeJSON "request-chat-completions.json" requests.chat-completions} --output chat-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"chat.completion\"' chat-completions.json")
+          machine.succeed("${jq}/bin/jq --exit-status 'debug | .choices | first.message.content | tonumber == 3' chat-completions.json")
+
           machine.succeed("curl -f http://localhost:${port}/v1/edits --json @${writers.writeJSON "request-edit-completions.json" requests.edit-completions} --output edit-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"edit\"' edit-completions.json")
+
           machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" requests.completions} --output completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
         '';
