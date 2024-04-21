@@ -105,7 +105,7 @@ in
       # https://localai.io/advanced/#full-config-model-file-reference
       model-config = {
         name = "gpt-3.5-turbo";
-        conext_size = 4096;
+        conext_size = 8192;
         parameters = {
           model = model-gguf.name;
           # defaults from:
