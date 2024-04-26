@@ -23,6 +23,7 @@ in
   version = testers.testVersion {
     package = self;
     version = "v" + self.version;
+    command = "local-ai --help";
   };
 
   health = testers.runNixOSTest ({ config, ... }: {
