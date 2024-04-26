@@ -103,7 +103,6 @@ in
           temperature = 0.7;
           top_p = 0.9;
           top_k = 0;
-          max_tokens = 512;
           # following parameter leads to outputs like: !!!!!!!!!!!!!!!!!!!
           #repeat_penalty = 1;
           presence_penalty = 0;
