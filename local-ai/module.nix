@@ -28,11 +28,17 @@ in
       type = types.either types.package types.str;
       default = "models";
     };
+
+    parallelRequests = mkOption {
+      type = types.int;
+      default = 1;
+    };
   };
 
   config = lib.mkIf cfg.enable {
     systemd.services.local-ai = {
       wantedBy = [ "multi-user.target" ];
+      environment.LLAMACPP_PARALLEL = toString cfg.parallelRequests;
       serviceConfig = {
         DynamicUser = true;
         ExecStart = lib.escapeShellArgs ([
@@ -47,6 +53,7 @@ in
           "--models-path"
           (toString cfg.models)
         ]
+        ++ lib.optional (cfg.parallelRequests > 1) "--parallel-requests"
         ++ cfg.extraArgs);
         RuntimeDirectory = "local-ai";
         WorkingDirectory = "%t/local-ai";
