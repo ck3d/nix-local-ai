@@ -20,11 +20,6 @@ let
   inherit (self.lib) genModels;
 in
 {
-  version = testers.testVersion {
-    package = self;
-    version = "v" + self.version;
-  };
-
   health = testers.runNixOSTest ({ config, ... }: {
     name = self.name + "-health";
     nodes.machine = common-config;
