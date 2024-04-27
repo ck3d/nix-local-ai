@@ -108,6 +108,7 @@ in
           #repeat_penalty = 1;
           presence_penalty = 0;
           frequency_penalty = 0;
+          max_tokens = 100;
         };
         stopwords = [ "<|eot_id|>" ];
         template = {
@@ -140,6 +141,7 @@ in
           inherit model;
           instruction = "rephrase";
           input = "Black cat jumped out of the window";
+          max_tokens = 50;
         };
         # https://localai.io/features/text-generation/#completions
         completions = {
@@ -173,9 +175,11 @@ in
 
           machine.succeed("curl -f http://localhost:${port}/v1/edits --json @${writers.writeJSON "request-edit-completions.json" requests.edit-completions} --output edit-completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object == \"edit\"' edit-completions.json")
+          machine.succeed("${jq}/bin/jq --exit-status '.usage.completion_tokens | debug == ${toString requests.edit-completions.max_tokens}' edit-completions.json")
 
           machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" requests.completions} --output completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
+          machine.succeed("${jq}/bin/jq --exit-status '.usage.completion_tokens | debug == ${toString model-configs.${model}.parameters.max_tokens}' completions.json")
         '';
     };
 
