@@ -159,6 +159,8 @@ in
         virtualisation.cores = 4;
         virtualisation.memorySize = 8192;
         services.local-ai.models = models;
+        # TODO: Add test case parallel requests
+        services.local-ai.parallelRequests = 2;
       };
       passthru = { inherit models requests; };
       testScript =
