@@ -93,6 +93,7 @@ in
       # https://localai.io/advanced/#full-config-model-file-reference
       model-configs.${model} = rec {
         context_size = 8192;
+        backend = "llama-cpp";
         parameters = {
           # https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF
           # https://ai.meta.com/blog/meta-llama-3/
