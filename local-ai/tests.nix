@@ -14,6 +14,7 @@ let
       enable = true;
       package = self;
       threads = config.virtualisation.cores;
+      logLevel = "debug";
     };
   };
 
