@@ -6,6 +6,7 @@
 , writers
 , symlinkJoin
 , jq
+, prom2json
 }:
 let
   common-config = { config, ... }: {
@@ -37,6 +38,10 @@ in
       ''
         machine.wait_for_open_port(${port})
         machine.succeed("curl -f http://localhost:${port}/readyz")
+
+        machine.succeed("${prom2json}/bin/prom2json http://localhost:${port}/metrics > metrics.json")
+
+        machine.copy_from_vm("metrics.json")
       '';
   });
 
@@ -81,6 +86,10 @@ in
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .data[].id == \"${model}\"' models.json")
           machine.succeed("curl -f http://localhost:${port}/embeddings --json @${writers.writeJSON "request.json" requests.request} --output embeddings.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .model == \"${model}\"' embeddings.json")
+
+          machine.succeed("${prom2json}/bin/prom2json http://localhost:${port}/metrics > metrics.json")
+
+          machine.copy_from_vm("metrics.json")
         '';
     };
 
@@ -184,6 +193,10 @@ in
           machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" requests.completions} --output completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
           machine.succeed("${jq}/bin/jq --exit-status '.usage.completion_tokens | debug == ${toString model-configs.${model}.parameters.max_tokens}' completions.json")
+
+          machine.succeed("${prom2json}/bin/prom2json http://localhost:${port}/metrics > metrics.json")
+
+          machine.copy_from_vm("metrics.json")
         '';
     };
 
@@ -247,6 +260,10 @@ in
           machine.succeed("curl -f http://localhost:${port}/tts --json @${writers.writeJSON "request.json" requests.request} --output out.wav")
           machine.succeed("curl -f http://localhost:${port}/v1/audio/transcriptions --header 'Content-Type: multipart/form-data' --form file=@out.wav --form model=${model-stt} --output transcription.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .segments | first.text == \"${requests.request.input}\"' transcription.json")
+
+          machine.succeed("${prom2json}/bin/prom2json http://localhost:${port}/metrics > metrics.json")
+
+          machine.copy_from_vm("metrics.json")
         '';
     };
 }
