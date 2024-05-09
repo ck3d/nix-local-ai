@@ -2,7 +2,6 @@
 , nodejs
 , fetchFromGitHub
 , makeWrapper
-, fetchzip
 , inter
 }:
 buildNpmPackage rec {

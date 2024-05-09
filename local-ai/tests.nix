@@ -28,7 +28,7 @@ in
     command = "local-ai --help";
   };
 
-  health = testers.runNixOSTest ({ config, ... }: {
+  health = testers.runNixOSTest {
     name = self.name + "-health";
     nodes.machine = common-config;
     testScript =
@@ -43,7 +43,7 @@ in
 
         machine.copy_from_vm("metrics.json")
       '';
-  });
+  };
 
   # https://localai.io/features/embeddings/#bert-embeddings
   bert =
