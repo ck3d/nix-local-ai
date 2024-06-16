@@ -107,8 +107,8 @@ in
           # https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF
           # https://ai.meta.com/blog/meta-llama-3/
           model = fetchurl {
-            url = "https://huggingface.co/lmstudio-community/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf";
-            sha256 = "ab9e4eec7e80892fd78f74d9a15d0299f1e22121cea44efd68a7a02a3fe9a1da";
+            url = "https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF-v2/resolve/main/Meta-Llama-3-8B-Instruct-v2.Q4_K_M.gguf";
+            sha256 = "99b17090aacbecd8e276b378d5974882c2b02733bda039db2804e244821e170d";
           };
           # defaults from:
           # https://deepinfra.com/meta-llama/Meta-Llama-3-8B-Instruct
