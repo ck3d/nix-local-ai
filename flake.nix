@@ -2,14 +2,13 @@
   description = "Nix package of LocalAI";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
     nixpkgs-2405.url = "github:nixos/nixpkgs/nixos-24.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable-small";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-2405, nixpkgs-unstable }:
+  outputs = { self, nixpkgs-2405, nixpkgs-unstable }:
     let
-      inherit (nixpkgs) lib;
+      inherit (nixpkgs-2405) lib;
       forAllSystems = lib.genAttrs lib.systems.flakeExposed;
     in
     {
@@ -18,11 +17,6 @@
       packages = forAllSystems
         (system:
           let
-            pkgs-stable = import nixpkgs {
-              inherit system;
-              overlays = builtins.attrValues self.overlays;
-              config = { allowUnfree = true; };
-            };
             pkgs-2405 = import nixpkgs-2405 {
               inherit system;
               overlays = builtins.attrValues self.overlays;
@@ -35,8 +29,7 @@
             };
           in
           {
-            local-ai-openblas-nixos2311 = pkgs-stable.nix-local-ai.local-ai.override { with_openblas = true; };
-            local-ai-cublas-nixos2311 = pkgs-stable.nix-local-ai.local-ai.override { with_cublas = true; };
+            local-ai-nixos2405 = pkgs-2405.nix-local-ai.local-ai;
             local-ai-openblas-nixos2405 = pkgs-2405.nix-local-ai.local-ai.override { with_openblas = true; };
             local-ai-cublas-nixos2405 = pkgs-2405.nix-local-ai.local-ai.override { with_cublas = true; };
             default = pkgs-unstable.nix-local-ai.local-ai;
