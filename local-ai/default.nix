@@ -61,7 +61,7 @@ let
     else if with_clblas then "clblas"
     else "";
 
-  inherit (cudaPackages) libcublas cuda_nvcc cuda_cccl cuda_cudart cudatoolkit libcufft;
+  inherit (cudaPackages) libcublas cuda_nvcc cuda_cccl cuda_cudart libcufft;
 
   go-llama = effectiveStdenv.mkDerivation {
     name = "go-llama";
@@ -78,13 +78,12 @@ let
     ];
 
     buildInputs = [ ]
+      ++ lib.optionals with_cublas [ cuda_cccl cuda_cudart libcublas ]
       ++ lib.optionals with_clblas [ clblast ocl-icd opencl-headers ]
       ++ lib.optionals with_openblas [ openblas.dev ];
 
     nativeBuildInputs = [ cmake ]
-      # backward compatiblity with nixos-23.11
-      # use cuda_nvcc after release of nixos-24.05
-      ++ lib.optionals with_cublas [ cudatoolkit ];
+      ++ lib.optionals with_cublas [ cuda_nvcc ];
 
     dontUseCmakeConfigure = true;
 
