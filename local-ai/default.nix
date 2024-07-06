@@ -97,12 +97,12 @@ let
   llama-cpp-rpc = (llama-cpp-grpc.overrideAttrs (prev: {
     name = "llama-cpp-rpc";
     cmakeFlags = prev.cmakeFlags ++ [
-      (lib.cmakeBool "LLAMA_AVX" false)
-      (lib.cmakeBool "LLAMA_AVX2" false)
-      (lib.cmakeBool "LLAMA_AVX512" false)
-      (lib.cmakeBool "LLAMA_FMA" false)
-      (lib.cmakeBool "LLAMA_F16C" false)
-      (lib.cmakeBool "LLAMA_RPC" true)
+      (lib.cmakeBool "GGML_AVX" false)
+      (lib.cmakeBool "GGML_AVX2" false)
+      (lib.cmakeBool "GGML_AVX512" false)
+      (lib.cmakeBool "GGML_FMA" false)
+      (lib.cmakeBool "GGML_F16C" false)
+      (lib.cmakeBool "GGML_RPC" true)
     ];
     postPatch = prev.postPatch + ''
       sed -i examples/rpc/CMakeLists.txt \
@@ -119,8 +119,8 @@ let
     src = fetchFromGitHub {
       owner = "ggerganov";
       repo = "llama.cpp";
-      rev = "37bef8943312d91183ff06d8f1214082a17344a5";
-      hash = "sha256-E3kCMDK5TXozBsprp4D581WHTVP9aljxB1KZUKug1pM=";
+      rev = "cb5fad4c6c2cbef92e9b8b63449e1cb7664e4846";
+      hash = "sha256-cIJuDC+MFLd5hkA1kUxuaw2dZagHqn5fi5Q2XKvDEII=";
       fetchSubmodules = true;
     };
     postPatch = prev.postPatch + ''
@@ -137,11 +137,11 @@ let
     '';
     cmakeFlags = prev.cmakeFlags ++ [
       (lib.cmakeBool "BUILD_SHARED_LIBS" false)
-      (lib.cmakeBool "LLAMA_AVX" enable_avx)
-      (lib.cmakeBool "LLAMA_AVX2" enable_avx2)
-      (lib.cmakeBool "LLAMA_AVX512" enable_avx512)
-      (lib.cmakeBool "LLAMA_FMA" enable_fma)
-      (lib.cmakeBool "LLAMA_F16C" enable_f16c)
+      (lib.cmakeBool "GGML_AVX" enable_avx)
+      (lib.cmakeBool "GGML_AVX2" enable_avx2)
+      (lib.cmakeBool "GGML_AVX512" enable_avx512)
+      (lib.cmakeBool "GGML_FMA" enable_fma)
+      (lib.cmakeBool "GGML_F16C" enable_f16c)
     ];
     postInstall = null;
 
@@ -394,18 +394,18 @@ let
       stdenv;
 
   pname = "local-ai";
-  version = "2.17.1";
+  version = "2.18.1";
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-G9My4t3vJ1sWyD+vxUgON4ezXURVAAgu1nAtTjd3ZR8=";
+    hash = "sha256-hRrbGUUawQV4fqxAn3eFBvn4/lZ+NrKhxnGHqpljrec=";
   };
 
   self = buildGoModule.override { stdenv = effectiveStdenv; } {
     inherit pname version src;
 
-    vendorHash = "sha256-Hu7aJFi40CKNWAxYOR47VBZI1A/9SlBIVQVcB8iqcxA=";
+    vendorHash = "sha256-uvko1PQWW5P+6cgmwVKocKBm5GndszqCsSbxlXANqJs=";
 
     env.NIX_CFLAGS_COMPILE = lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
 
