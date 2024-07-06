@@ -102,16 +102,12 @@ let
       (lib.cmakeBool "GGML_AVX512" false)
       (lib.cmakeBool "GGML_FMA" false)
       (lib.cmakeBool "GGML_F16C" false)
-      (lib.cmakeBool "GGML_RPC" true)
     ];
-    postPatch = prev.postPatch + ''
-      sed -i examples/rpc/CMakeLists.txt \
-        -e '$a\install(TARGETS rpc-server RUNTIME)'
-    '';
   })).override {
     cudaSupport = false;
     openclSupport = false;
     blasSupport = false;
+    rpcSupport = true;
   };
 
   llama-cpp-grpc = (llama-cpp.overrideAttrs (final: prev: {
@@ -143,8 +139,6 @@ let
       (lib.cmakeBool "GGML_FMA" enable_fma)
       (lib.cmakeBool "GGML_F16C" enable_f16c)
     ];
-    postInstall = null;
-
     buildInputs = prev.buildInputs ++ [
       protobuf # provides also abseil_cpp as propagated build input
       grpc
@@ -441,7 +435,7 @@ let
       cp ${llama-cpp-rpc}/bin/grpc-server backend-assets/grpc/llama-cpp-grpc
 
       mkdir -p backend-assets/util
-      cp ${llama-cpp-rpc}/bin/rpc-server backend-assets/util/llama-cpp-rpc-server
+      cp ${llama-cpp-rpc}/bin/llama-rpc-server backend-assets/util/llama-cpp-rpc-server
     '';
 
     buildInputs = [ ]
