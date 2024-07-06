@@ -9,5 +9,6 @@ in
     chatbot-ui = callPackage ./chatbot-ui { };
     chatbot-ui-legacy = callPackage ./chatbot-ui-legacy { };
     open-webui = callPackage ./open-webui { };
+    llama-cpp = callPackage ./llama-cpp { };
   };
 }
