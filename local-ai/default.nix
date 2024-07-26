@@ -115,8 +115,8 @@ let
     src = fetchFromGitHub {
       owner = "ggerganov";
       repo = "llama.cpp";
-      rev = "87e397d00bdcedd5cbf6dfda06a7b0f302462728";
-      hash = "sha256-HGjPJ9Ig9NJlJha7PewYJZwR0xDKKXeGVBHnkDTzHM8=";
+      rev = "79167d9e49aef9caa98e13ee7ca067ec9f88b4b5";
+      hash = "sha256-SJP+gsEN7rIzW0m1qn2TCf437GpYhTiIG7fHYVd3ZU8=";
       fetchSubmodules = true;
     };
     postPatch = prev.postPatch + ''
@@ -388,12 +388,12 @@ let
       stdenv;
 
   pname = "local-ai";
-  version = "2.19.1";
+  version = "2.19.2";
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-KUjIwuedqYWHMo4rK7rGQDOzdm87awpQi8+5R8W03IY=";
+    hash = "sha256-0YCCIPMIv/u+znSHILTyAaVv5V2KtITAcsK9/eYr2bk=";
   };
 
   prepare-sources =
