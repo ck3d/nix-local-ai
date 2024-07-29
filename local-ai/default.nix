@@ -17,6 +17,10 @@
 , buildGoModule
 , makeWrapper
 , ncurses
+, which
+
+, enable_upx ? true
+, upx
 
   # apply feature parameter names according to
   # https://github.com/NixOS/rfcs/pull/169
@@ -460,7 +464,9 @@ let
       protoc-gen-go-grpc
       makeWrapper
       ncurses # tput
+      which
     ]
+    ++ lib.optional enable_upx upx
     ++ lib.optionals with_cublas [ cuda_nvcc ];
 
     enableParallelBuilding = false;
@@ -520,7 +526,8 @@ let
         ]
           ++ lib.optionals with_clblas [ clblast ocl-icd ]
           ++ lib.optionals with_openblas [ openblas ]
-          ++ lib.optionals with_tts [ piper-phonemize ];
+          ++ lib.optionals with_tts [ piper-phonemize ]
+          ++ lib.optionals (with_tts && enable_upx) [ fmt spdlog ];
       in
       ''
         wrapProgram $out/bin/${pname} \
