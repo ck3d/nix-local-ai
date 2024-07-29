@@ -447,8 +447,8 @@ let
       mkdir -p backend-assets/util
       cp ${llama-cpp-rpc}/bin/llama-rpc-server backend-assets/util/llama-cpp-rpc-server
 
-      # avoid rebuild of prebuilt libraries
-      touch sources/**/lib*.a
+      # avoid rebuild of prebuilt make targets
+      touch backend-assets/grpc/* backend-assets/util/* sources/**/lib*.a
     '';
 
     buildInputs = [ ]
