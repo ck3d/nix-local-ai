@@ -106,11 +106,11 @@ in
         parameters = {
           # https://ai.meta.com/blog/meta-llama-3-1/
           model = fetchurl {
-            url = "https://huggingface.co/lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M-take2.gguf";
-            sha256 = "431354b8f6066accf13219106f1956ecf9a212089dea1fd18b416454f28ba421";
+            url = "https://huggingface.co/lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf";
+            sha256 = "f2be3e1a239c12c9f3f01a962b11fb2807f8032fdb63b0a5502ea42ddef55e44";
           };
           # defaults from:
-          # https://deepinfra.com/meta-llama/Meta-Llama-3-8B-Instruct
+          # https://deepinfra.com/meta-llama/Meta-Llama-3.1-8B-Instruct
           temperature = 0.7;
           top_p = 0.9;
           top_k = 0;
