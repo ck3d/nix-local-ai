@@ -14,6 +14,8 @@
     {
       overlays.default = import ./overlay.nix;
 
+      formatter = forAllSystems (system: nixpkgs-unstable.legacyPackages.${system}.nixfmt-rfc-style);
+
       packages = forAllSystems
         (system:
           let
