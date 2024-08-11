@@ -1,18 +1,19 @@
-{ mkYarnPackage
-, lib
-, fetchFromGitHub
-, runCommand
-, libuuid
-, jq
-, callPackage
-, makeWrapper
-, nodejs
-, python3
+{
+  mkYarnPackage,
+  lib,
+  fetchFromGitHub,
+  runCommand,
+  libuuid,
+  jq,
+  callPackage,
+  makeWrapper,
+  nodejs,
+  python3,
   # canvas
-, pkg-config
-, pixman
-, cairo
-, pango
+  pkg-config,
+  pixman,
+  cairo,
+  pango,
 }:
 let
   pname = "flowise";
@@ -24,8 +25,7 @@ let
     hash = "sha256-vwE62AdNyCnWdmtNHBMf4cBriEBR/+qSctVPeLI+HAg=";
   };
 
-  src = runCommand "patched-source"
-    { nativeBuildInputs = [ jq ]; } ''
+  src = runCommand "patched-source" { nativeBuildInputs = [ jq ]; } ''
     cp -r ${vanillaSrc} $out
     chmod -R +w $out
     jq --slurp --from-file ${./package.jq} \

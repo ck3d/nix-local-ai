@@ -1,7 +1,8 @@
-{ buildNpmPackage
-, nodePackages
-, fetchFromGitHub
-, runtimeShell
+{
+  buildNpmPackage,
+  nodePackages,
+  fetchFromGitHub,
+  runtimeShell,
 }:
 buildNpmPackage rec {
   pname = "open-webui";

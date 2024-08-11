@@ -1,8 +1,9 @@
-{ buildNpmPackage
-, nodejs
-, fetchFromGitHub
-, makeWrapper
-, inter
+{
+  buildNpmPackage,
+  nodejs,
+  fetchFromGitHub,
+  makeWrapper,
+  inter,
 }:
 buildNpmPackage rec {
   pname = "chatbot-ui-legacy";
@@ -23,9 +24,7 @@ buildNpmPackage rec {
 
   npmDepsHash = "sha256-YF2TFXjdPyCVNWCJreP/GCAuVmKZf25m4gbyyX5OI+A=";
 
-  nativeBuildInputs = [
-    makeWrapper
-  ];
+  nativeBuildInputs = [ makeWrapper ];
 
   # https://nextjs.org/telemetry
   env.NEXT_TELEMETRY_DISABLED = 1;

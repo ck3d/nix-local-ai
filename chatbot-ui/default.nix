@@ -1,12 +1,14 @@
-{ buildNpmPackage
-, nodejs
-, fetchFromGitHub
-, makeWrapper
-, fetchzip
-, vips
-, pkg-config
-, inter
-}: buildNpmPackage rec {
+{
+  buildNpmPackage,
+  nodejs,
+  fetchFromGitHub,
+  makeWrapper,
+  fetchzip,
+  vips,
+  pkg-config,
+  inter,
+}:
+buildNpmPackage rec {
   pname = "chatbot-ui";
   version = "20240402";
 
@@ -29,9 +31,7 @@
     pkg-config
   ];
 
-  buildInputs = [
-    vips
-  ];
+  buildInputs = [ vips ];
 
   # https://nextjs.org/telemetry
   env.NEXT_TELEMETRY_DISABLED = 1;
