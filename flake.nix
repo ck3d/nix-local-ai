@@ -2,7 +2,7 @@
   description = "Nix package of LocalAI";
 
   inputs = {
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable-small";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/release-24.11";
   };
 
   outputs =
