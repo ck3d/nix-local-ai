@@ -51,7 +51,7 @@ in
   };
 
 }
-// lib.optionalAttrs (!self.features.with_cublas && !self.features.with_clblas) {
+// lib.optionalAttrs (!self.features.with_cublas && !self.features.with_clblas && !self.features.with_vulkan) {
   # https://localai.io/features/embeddings/#llamacpp-embeddings
   llamacpp-embeddings =
     let

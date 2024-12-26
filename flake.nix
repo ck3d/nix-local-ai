@@ -57,6 +57,7 @@
               "cublas"
               "clblas"
               "openblas"
+              "vulkan"
             ]
         )
       );

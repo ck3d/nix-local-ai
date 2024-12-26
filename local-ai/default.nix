@@ -44,6 +44,8 @@
   ocl-icd,
   opencl-headers,
 
+  with_vulkan ? false,
+
   with_tinydream ? false, # do not compile with cublas
   ncnn,
 
@@ -65,6 +67,7 @@ let
         with_openblas
         with_cublas
         with_clblas
+        with_vulkan
       ]) <= 1;
     if with_openblas then
       "openblas"
@@ -138,6 +141,7 @@ let
         openclSupport = false;
         blasSupport = false;
         rpcSupport = true;
+        vulkanSupport = false;
       };
 
   llama-cpp-grpc =
@@ -185,6 +189,7 @@ let
         rocmSupport = false;
         openclSupport = with_clblas;
         blasSupport = with_openblas;
+        vulkanSupport = with_vulkan;
       };
 
   espeak-ng' = espeak-ng.overrideAttrs (self: {
@@ -626,6 +631,7 @@ let
       inherit
         with_cublas
         with_openblas
+        with_vulkan
         with_tts
         with_stablediffusion
         with_tinydream
