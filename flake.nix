@@ -2,12 +2,14 @@
   description = "Nix package of LocalAI";
 
   inputs = {
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs-2411.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
   outputs =
     {
       self,
+      nixpkgs-2411,
       nixpkgs-unstable,
     }:
     let
@@ -22,15 +24,22 @@
       packages = forAllSystems (
         system:
         let
+          pkgs-2411 = import nixpkgs-2411 {
+            inherit system;
+            overlays = builtins.attrValues self.overlays;
+            config.allowUnfree = true;
+          };
+
           pkgs-unstable = import nixpkgs-unstable {
             inherit system;
             overlays = builtins.attrValues self.overlays;
-            config = {
-              allowUnfree = true;
-            };
+            config.allowUnfree = true;
           };
         in
         {
+          local-ai-nixos2411 = pkgs-2411.nix-local-ai.local-ai;
+          local-ai-openblas-nixos2411 = pkgs-2411.nix-local-ai.local-ai.override { with_openblas = true; };
+          local-ai-cublas-nixos2411 = pkgs-2411.nix-local-ai.local-ai.override { with_cublas = true; };
           default = pkgs-unstable.nix-local-ai.local-ai;
         }
         // pkgs-unstable.nix-local-ai
