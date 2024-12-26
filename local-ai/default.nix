@@ -151,18 +151,20 @@ let
           hash = "sha256-WFkg4ZhL5x55JdeFmAGBFKjWd31XyfGPtQkn+9b7GF4=";
           fetchSubmodules = true;
         };
-        postPatch = ''
-          cd examples
-          cp -r --no-preserve=mode ${src}/backend/cpp/llama grpc-server
-          cp llava/clip.* llava/llava.* grpc-server
-          printf "\nadd_subdirectory(grpc-server)" >> CMakeLists.txt
+        postPatch =
+          prev.postPatch
+          + ''
+            cd examples
+            cp -r --no-preserve=mode ${src}/backend/cpp/llama grpc-server
+            cp llava/clip.* llava/llava.* grpc-server
+            printf "\nadd_subdirectory(grpc-server)" >> CMakeLists.txt
 
-          cp ${src}/backend/backend.proto grpc-server
-          sed -i grpc-server/CMakeLists.txt \
-            -e '/get_filename_component/ s;[.\/]*backend/;;' \
-            -e '$a\install(TARGETS ''${TARGET} RUNTIME)'
-          cd ..
-        '';
+            cp ${src}/backend/backend.proto grpc-server
+            sed -i grpc-server/CMakeLists.txt \
+              -e '/get_filename_component/ s;[.\/]*backend/;;' \
+              -e '$a\install(TARGETS ''${TARGET} RUNTIME)'
+            cd ..
+          '';
         cmakeFlags = prev.cmakeFlags ++ [
           (lib.cmakeBool "BUILD_SHARED_LIBS" false)
           (lib.cmakeBool "GGML_AVX" enable_avx)
