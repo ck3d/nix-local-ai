@@ -151,8 +151,8 @@ let
         src = fetchFromGitHub {
           owner = "ggerganov";
           repo = "llama.cpp";
-          rev = "26a8406ba9198eb6fdd8329fa717555b4f77f05f";
-          hash = "sha256-WFkg4ZhL5x55JdeFmAGBFKjWd31XyfGPtQkn+9b7GF4=";
+          rev = "ba8a1f9c5b675459c55a83e3f97f10df3a66c788";
+          hash = "sha256-YunQh1760AcknBFwHc6uMZJ7V4OzEAKiwB9HBH1n4bc=";
           fetchSubmodules = true;
         };
         postPatch =
@@ -409,8 +409,8 @@ let
     src = fetchFromGitHub {
       owner = "leejet";
       repo = "stable-diffusion.cpp";
-      rev = "4570715727f35e5a07a76796d823824c8f42206c";
-      hash = "sha256-1w7OokrQflasvauDEADLDJf2530m5a7WP+X1KgwxCks=";
+      rev = "dcf91f9e0f2cbf9da472ee2a556751ed4bab2d2a";
+      hash = "sha256-NHIjLZNfx9G6olp0VWBthuf7jIQC/qVRw6q9A6H866E=";
       fetchSubmodules = true;
     };
     installPhase = ''
@@ -438,12 +438,12 @@ let
       stdenv;
 
   pname = "local-ai";
-  version = "2.24.2";
+  version = "2.25.0";
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
     rev = "v${version}";
-    hash = "sha256-nJYeNwx6G3WhrTZYi1yoPzYtofx1H7bTkK0T9ld5wcE=";
+    hash = "sha256-y0Pj74A2t5DpfI/tCEnV/w2zHLDZzXLJtgFLgng4MFw=";
   };
 
   prepare-sources =
@@ -467,7 +467,7 @@ let
   self = buildGo123Module.override { stdenv = effectiveStdenv; } {
     inherit pname version src;
 
-    vendorHash = "sha256-QmOoICJ11SY8xXE0g1+1mWRUZ3kQPtCcpM6aZiBkHQ0=";
+    vendorHash = "sha256-5xWrPsQwmGIA2k8OFR9OH3BeCUvLETygViWEOIRgjB0=";
 
     env.NIX_CFLAGS_COMPILE = lib.optionalString with_stablediffusion " -isystem ${opencv}/include/opencv4";
 
