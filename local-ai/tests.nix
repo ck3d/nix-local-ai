@@ -44,8 +44,12 @@ in
       ''
         machine.wait_for_open_port(${port})
         machine.succeed("curl -f http://localhost:${port}/readyz")
+        machine.succeed("curl -f http://localhost:${port}/v1/models --output models.json")
 
         machine.succeed("${prom2json}/bin/prom2json http://localhost:${port}/metrics > metrics.json")
+        # check if following issue is still valid
+        # https://github.com/mudler/LocalAI/issues/2207
+        machine.succeed("${jq}/bin/jq --exit-status '.[] | select(.name == \"api_call\").metrics | debug | any(.labels.path == \"/metricsls\" and .count == \"1\")' metrics.json")
         machine.copy_from_vm("metrics.json")
       '';
   };
