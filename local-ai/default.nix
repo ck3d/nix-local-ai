@@ -27,11 +27,11 @@
   # https://github.com/NixOS/rfcs/pull/169
 
   # CPU extensions
-  enable_avx ? true,
-  enable_avx2 ? true,
+  enable_avx ? stdenv.hostPlatform.isx86_64,
+  enable_avx2 ? stdenv.hostPlatform.isx86_64,
   enable_avx512 ? stdenv.hostPlatform.avx512Support,
-  enable_f16c ? true,
-  enable_fma ? true,
+  enable_f16c ? stdenv.hostPlatform.isx86_64,
+  enable_fma ? stdenv.hostPlatform.isx86_64,
 
   with_openblas ? false,
   openblas,
@@ -49,7 +49,8 @@
   with_tinydream ? false, # do not compile with cublas
   ncnn,
 
-  with_stablediffusion ? true,
+  # TODO: Fix compilation for aarch64
+  with_stablediffusion ? stdenv.hostPlatform.isx86_64,
   opencv,
 
   with_tts ? true,
