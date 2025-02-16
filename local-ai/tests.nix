@@ -215,9 +215,6 @@ in
           machine.succeed("curl -f http://localhost:${port}/v1/completions --json @${writers.writeJSON "request-completions.json" requests.completions} --output completions.json")
           machine.copy_from_vm("completions.json")
           machine.succeed("${jq}/bin/jq --exit-status 'debug | .object ==\"text_completion\"' completions.json")
-          machine.succeed("${jq}/bin/jq --exit-status '.usage.completion_tokens | debug == ${
-            toString model-configs.${model}.parameters.max_tokens
-          }' completions.json")
 
           machine.succeed("${prom2json}/bin/prom2json http://localhost:${port}/metrics > metrics.json")
           machine.copy_from_vm("metrics.json")

@@ -49,8 +49,6 @@
               name = "local-ai-" + type;
               value = pkgs-unstable.nix-local-ai.local-ai.override {
                 "with_${type}" = true;
-                # tinydream can not compiled with cublas gcc
-                with_tinydream = type != "cublas";
               };
             })
             [
