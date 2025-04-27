@@ -20,7 +20,7 @@
   ncurses,
   which,
   opencv,
-  ncnn,
+  curl,
 
   enable_upx ? true,
   upx,
@@ -108,8 +108,8 @@ let
         src = fetchFromGitHub {
           owner = "ggerganov";
           repo = "llama.cpp";
-          rev = "300907b2110cc17b4337334dc397e05de2d8f5e0";
-          hash = "sha256-7jPgToZ8Xs+8DfXP5WFWZKhqFdYcZ9yFzWVKjvOttIA=";
+          rev = "d6d2c2ab8c8865784ba9fef37f2b2de3f2134d33";
+          hash = "sha256-b9B5I3EbBFrkWc6RLXMWcCRKayyWjlGuQrogUcrISrc=";
           fetchSubmodules = true;
         };
         postPatch =
@@ -117,7 +117,7 @@ let
           + ''
             cd examples
             cp -r --no-preserve=mode ${src}/backend/cpp/llama grpc-server
-            cp llava/clip.* llava/llava.* grpc-server
+            cp llava/clip* llava/llava.* grpc-server
             printf "\nadd_subdirectory(grpc-server)" >> CMakeLists.txt
 
             cp ${src}/backend/backend.proto grpc-server
@@ -138,6 +138,7 @@ let
           protobuf # provides also abseil_cpp as propagated build input
           grpc
           openssl
+          curl
         ];
       }
     )).override
@@ -287,7 +288,7 @@ let
     src = fetchFromGitHub {
       owner = "PABannier";
       repo = "bark.cpp";
-      rev = "v1.0.0";
+      tag = "v1.0.0";
       hash = "sha256-wOcggRWe8lsUzEj/wqOAUlJVypgNFmit5ISs9fbwoCE=";
       fetchSubmodules = true;
     };
@@ -304,10 +305,10 @@ let
   stable-diffusion = stdenv.mkDerivation {
     name = "stable-diffusion";
     src = fetchFromGitHub {
-      owner = "leejet";
+      owner = "richiejp";
       repo = "stable-diffusion.cpp";
-      rev = "d46ed5e184b97c2018dc2e8105925bdb8775e02c";
-      hash = "sha256-5i2HjkdaQEmlUWeHucQyrS8zNS+xyB7Zj+1oA/xsv2k=";
+      rev = "53e3b17eb3d0b5760ced06a1f98320b68b34aaae"; # branch cuda-fix
+      hash = "sha256-z56jafOdibpX+XhRsrc7ieGbeug4bf737/UobqkpBV0=";
       fetchSubmodules = true;
     };
     installPhase = ''
@@ -317,6 +318,9 @@ let
         | tar cf - --null --files-from - \
         | tar xf - -C $out/build
     '';
+    cmakeFlags = [
+      (lib.cmakeFeature "GGML_BUILD_NUMBER" "1")
+    ];
     nativeBuildInputs = [ cmake ];
     buildInputs = [ opencv ];
   };
@@ -332,12 +336,12 @@ let
       stdenv;
 
   pname = "local-ai";
-  version = "2.26.0";
+  version = "2.28.0";
   src = fetchFromGitHub {
     owner = "go-skynet";
     repo = "LocalAI";
-    rev = "v${version}";
-    hash = "sha256-eHylgEbPNQ8CVLlstkeQH6jqYOKfvel1uU5ro8DkLJs=";
+    tag = "v${version}";
+    hash = "sha256-Hpz0dGkgasSY/FGO7mDzqsLjXut0LdQ9PUXGaURUOlY=";
   };
 
   prepare-sources =
@@ -356,7 +360,7 @@ let
   self = buildGo123Module.override { stdenv = effectiveStdenv; } {
     inherit pname version src;
 
-    vendorHash = "sha256-6loR8bvt5BlijufUBVDpxNS/cVCMmbaCwEhYpJKwGys=";
+    vendorHash = "sha256-1OY/y1AeL0K+vOU4Jk/cj7rToVLC9EkkNhgifB+icDM=";
 
     env.NIX_CFLAGS_COMPILE = " -isystem ${opencv}/include/opencv4";
 
@@ -365,7 +369,6 @@ let
         # TODO: add silero-vad
         sed -i Makefile \
           -e '/mod download/ d' \
-          -e '/^ALL_GRPC_BACKENDS+=backend-assets\/grpc\/llama-cpp-fallback/ d' \
           -e '/^ALL_GRPC_BACKENDS+=backend-assets\/grpc\/llama-cpp-avx/ d' \
           -e '/^ALL_GRPC_BACKENDS+=backend-assets\/grpc\/llama-cpp-cuda/ d' \
           -e '/^ALL_GRPC_BACKENDS+=backend-assets\/grpc\/silero-vad/ d' \
@@ -384,7 +387,7 @@ let
       + ''
         shopt -s extglob
         mkdir -p backend-assets/grpc
-        cp ${llama-cpp-grpc}/bin/grpc-server backend-assets/grpc/llama-cpp-avx2
+        cp ${llama-cpp-grpc}/bin/grpc-server backend-assets/grpc/llama-cpp-fallback
         cp ${llama-cpp-rpc}/bin/grpc-server backend-assets/grpc/llama-cpp-grpc
 
         mkdir -p backend/cpp/llama/llama.cpp
@@ -476,7 +479,7 @@ let
       runHook postInstall
     '';
 
-    # patching rpath with patchelf doens't work. The execuable
+    # patching rpath with patchelf doens't work. The executable
     # raises an segmentation fault
     postFixup =
       let
